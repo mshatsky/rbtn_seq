@@ -2,18 +2,6 @@
 
 use strict;
 use warnings;
-
-use utf8;
-
-use DBI;
-use LWP::Simple;
-use Data::Dumper;
-use HTML::Entities;
-use Encode;
-use Unicode::String qw(utf8);
-use HTML::Strip;
-use HTML::TableExtract;
-use Time::localtime;
  
 
 if (@ARGV < 2) {
@@ -93,7 +81,7 @@ while(<FILE>){
 }
 
 close FILE;
-
+exit(0);
 
 ###################################################
 use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace printObjectInfo);
