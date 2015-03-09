@@ -93,7 +93,7 @@ while(<FILE>){
 close FILE;
 
 #fill in experiment field
-foreach (keys $brseqdata){
+foreach (keys %brseqdata){
     $brseqdata{ $_ }{ experiment } = "$_";
 }
 
