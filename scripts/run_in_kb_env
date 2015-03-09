@@ -1,0 +1,6 @@
+#!/bin/sh
+export KB_TOP=/kb/dev_container
+export KB_RUNTIME=/kb/runtime
+export PATH=/kb/runtime/bin:/kb/dev_container/bin:$PATH
+export PERL5LIB=/kb/dev_container/modules/auth/lib:/kb/dev_container/modules/idserver/lib:/kb/dev_container/modules/jars/lib:/kb/dev_container/modules/kbapi_common/lib:/kb/dev_container/modules/typecomp/lib:/kb/deployment//lib
+/kb/runtime/bin/perl "$@"
