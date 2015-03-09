@@ -132,14 +132,14 @@ my $saveObjectsParams = {
                         ]
         };
 if ($params->{workspace} =~ /^\d+$/ ) { #is ID
-        $saveObjectsParams->{id}=$opt->{workspace}+0;
+        $saveObjectsParams->{id}=$workspace+0;
 } else { #is name
-        $saveObjectsParams->{workspace}=$opt->{workspace};
+        $saveObjectsParams->{workspace}=$workspace;
 }
 
 #Calling the server
 my $output;
-eval { $output = $serv->$save_objects($saveObjectsParams); };
+eval { $output = $serv->save_objects($saveObjectsParams); };
 if($@) {
     print "Object could not be saved!\n";
     print STDERR $@->{message}."\n";
