@@ -2,15 +2,17 @@
 
 use strict;
 use warnings;
- 
+use Getopt::Long;
 
-if (@ARGV < 2) {
-my $usage = <<EOF;
-file_with_meta_data file_with_logratios 
-EOF
-	print $usage;
-	exit 1;  
-} 
+my $usage = 
+"file_with_meta_data file_with_logratios <-w workspace> <-n object_name>
+";
+
+my $workspace = "";
+my $object_name = "new";
+
+(GetOptions('w=s' => \$workspace, 
+	    'n=s' => \$object_name) and scalar(@ARGV) >= 2)    || die $usage;
 
 my ($FNM_META, $FNM_LOGRT) = @ARGV;
 
@@ -84,29 +86,35 @@ close FILE;
 exit(0);
 
 ###################################################
+my $params = {
+       "id" => $object_name,
+       "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
+       workspace => $workspace,
+       metadata => "NA"
+};
+
+###################################################
 use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace printObjectInfo);
+
+my $serv = get_ws_client();
 
 #lookup version number of WS Service that will be loading the data
 my $ws_ver = '';
-if ($opt->{showerror} == 0){
-        eval { $ws_ver = $serv->ver(); };
-        if($@) {
-                print "Object could not be saved! Error connecting to the WS server.\n";
-                print STDERR $@->{message}."\n";
-                if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
-                print STDERR "\n";
-                exit 1;
-        }
-} else{
-        $ws_ver = $serv->ver();
+eval { $ws_ver = $serv->ver(); };
+if($@) {
+    print "Object could not be saved! Error connecting to the WS server.\n";
+    print STDERR $@->{message}."\n";
+    if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+    print STDERR "\n";
+    exit 1;
 }
 
 # set provenance info
 my $PA = {
                 "service"=>"Workspace",
                 "service_ver"=>$ws_ver,
-                "script"=>"ws-load",
-                "script_command_line"=>$fullCommand
+                "script"=>"upload-data.pl",
+                "script_command_line"=> "@ARGV"
           };
 $params->{provenance} = [ $PA ];
 
@@ -131,17 +139,13 @@ if ($params->{workspace} =~ /^\d+$/ ) { #is ID
 
 #Calling the server
 my $output;
-if ($opt->{showerror} == 0){
-        eval { $output = $serv->$servercommand($saveObjectsParams); };
-        if($@) {
-                print "Object could not be saved!\n";
-                print STDERR $@->{message}."\n";
-                if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
-                print STDERR "\n";
-                exit 1;
-        }
-} else{
-        $output = $serv->$servercommand($saveObjectsParams);
+eval { $output = $serv->$save_objects($saveObjectsParams); };
+if($@) {
+    print "Object could not be saved!\n";
+    print STDERR $@->{message}."\n";
+    if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+    print STDERR "\n";
+    exit 1;
 }
 
 #Report the results
@@ -154,3 +158,4 @@ if (scalar(@$output)>0) {
         print "No details returned!\n";
 }
 print "\n";
+exit(0);
