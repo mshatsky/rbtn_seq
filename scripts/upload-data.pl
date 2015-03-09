@@ -98,8 +98,6 @@ foreach (keys $brseqdata){
 }
 
 
-#try the first one
-$params->{data} = $brseqdata{  $headerData[4] };
 
 ###################################################
 my $params = {
@@ -108,6 +106,9 @@ my $params = {
        workspace => $workspace,
        metadata => "NA"
 };
+
+#try the first one
+$params->{data} = $brseqdata{  $headerData[4] };
 
 ###################################################
 use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace printObjectInfo);
