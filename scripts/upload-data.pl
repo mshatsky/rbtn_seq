@@ -69,6 +69,12 @@ for(my $i=4; $i<= $#headerData; ++$i){
 #}
 
 
+#typedef structure {
+#    barseq_experiment_ref experiment;
+#    list<bar_seq_result> results;
+#} BarSeqExperimentResults;
+my %brseqdata=(); #hash of many BarSeqExperimentResults
+
 while(<FILE>){
     chomp;
     my @l = split /\t/, $_;
@@ -78,17 +84,27 @@ while(<FILE>){
     my ($locusId, $sysName, $desc, $comb, @lratios) = @l;
 
     for(my $i=0; $i<= $#lratios; ++$i){
-	#$meta{ $ExpNameIndex }{ $header[$i] } = $l[ $i ];
+	#fill in data
+	#typedef tuple<int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
+	my @res = (0,0,0,$lratios[ $i ]);
+	push @{$brseqdata{ $headerData[ $i + 4 ] }{ results }}, [ @res ];	
     }
 }
-
 close FILE;
-exit(0);
+
+#fill in experiment field
+foreach (keys $brseqdata){
+    $brseqdata{ $_ }{ experiment } = "$_";
+}
+
+
+#try the first one
+$params->{data} = $brseqdata{  $headerData[4] };
 
 ###################################################
 my $params = {
        "id" => $object_name,
-       "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
+       "type" => "KBaseRBTnSeq.BarSeqExperimentResults-0.1",
        workspace => $workspace,
        metadata => "NA"
 };
