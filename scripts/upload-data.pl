@@ -19,6 +19,16 @@ my ($FNM_META, $FNM_LOGRT) = @ARGV;
 die "Can't open file $FNM_META\n" if ! -e $FNM_META;
 die "Can't open file $FNM_LOGRT\n" if ! -e $FNM_LOGRT;
 
+my $serv = get_ws_client();
+
+#creates a new KBaseBiochem.Media object
+#input: objectID, workspace, string_media_name, ws_client
+sub createMediaObject($$$$);
+
+#creates a new object
+#input: $params, ws_client
+sub createObject($$);
+
 #####################################################
 #readin file with metadata
 #####################################################
@@ -34,6 +44,12 @@ my @index = grep { $header[$_] =~ /name/ } 0..$#header;
 die "Multiple or non existent field in the meta file the header 'name'\n" if scalar(@index)!=1;
 my $ExpNameIndex = $index[0];
 
+#find Media index 
+@index = grep { $header[$_] =~ /Media/ } 0..$#header;
+die "Multiple or non existent field in the meta file the header 'Media'\n" if scalar(@index)!=1;
+my $MediaIndex = $index[0];
+
+
 while(<FILE>){
     chomp;
     my @l = split /\t/, $_;
@@ -41,6 +57,9 @@ while(<FILE>){
     
     for(my $i=0; $i<= $#l; ++$i){
 	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];
+	#objectID, workspace, string_media_name, ws_client
+ 	createMediaObject($l[$MediaIndex], $workspace, $l[$MediaIndex], $serv );
+	exit(0);
     }
 }
 close FILE;
@@ -86,15 +105,15 @@ while(<FILE>){
     for(my $i=0; $i<= $#lratios; ++$i){
 	#fill in data
 	#typedef tuple<int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
-	my @res = (0,0,0,$lratios[ $i ]);
-	push @{$brseqdata{ $headerData[ $i + 4 ] }{ results }}, [ @res ];	
+	my @res = (0,0,0,0+$lratios[ $i ]);
+	push @{$brseqdata{ $headerData[ $i + 4 ] }->{ results }}, [ @res ];	
     }
 }
 close FILE;
 
 #fill in experiment field
 foreach (keys %brseqdata){
-    $brseqdata{ $_ }{ experiment } = "$_";
+    $brseqdata{ $_ }->{ experiment } = "$_";
 }
 
 
@@ -104,16 +123,18 @@ my $params = {
        "id" => $object_name,
        "type" => "KBaseRBTnSeq.BarSeqExperimentResults-0.1",
        workspace => $workspace,
-       metadata => "NA"
+       metadata => ""
 };
 
 #try the first one
 $params->{data} = $brseqdata{  $headerData[4] };
 
+print "T: ", $params->{data}->{experiment}, "\n";
+#print "T: ", $params->{data}->{results}->[0]->[0], " ", $params->{data}->{results}->[0]->[3], "\n";
+#print "T: ", $params->{data}->{results}->[9]->[0], " ", $params->{data}->{results}->[9]->[3], "\n";
+
 ###################################################
 use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace printObjectInfo);
-
-my $serv = get_ws_client();
 
 #lookup version number of WS Service that will be loading the data
 my $ws_ver = '';
@@ -143,7 +164,7 @@ my $saveObjectsParams = {
                                 "data"  => $params->{data},
                                 "name"  => $params->{id},
                                 "type"  => $params->{type},
-                                "meta"  => $params->{metadata},
+                                #"meta"  => $params->{metadata},
                                 "provenance" => $params->{provenance}
                            }
                         ]
@@ -176,3 +197,84 @@ if (scalar(@$output)>0) {
 }
 print "\n";
 exit(0);
+
+#creates a new KBaseBiochem.Media object
+#input: objectID, workspace, string_media_name, ws_client
+sub createMediaObject($$$$){
+	my $params = {
+		"id" => $_[0],
+		"type" => "KBaseBiochem.Media",
+		"workspace" => $_[1],
+	};
+	$params->{data}->{name} = $_[2];
+	$params->{data}->{id} =   $_[0];
+	$params->{data}->{isDefined} = 0;
+	$params->{data}->{type} = "custom";
+	$params->{data}->{isMinimal} = 0;
+	$params->{data}->{mediacompounds} = [];
+	
+	return createObject($params, $_[3]);
+}
+
+#creates a new object
+#input: $params, ws_client
+sub createObject($$){
+	my ($params, $serv) = @_;
+
+	my $ws_ver = '';
+	eval { $ws_ver = $serv->ver(); };
+	if($@) {
+    		print "Object could not be saved! Error connecting to the WS server.\n";
+    		print STDERR $@->{message}."\n";
+    		if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+    		print STDERR "\n";
+    		exit 1;
+	}
+
+	# set provenance info
+	my $PA = {
+                "service"=>"Workspace",
+                "service_ver"=>$ws_ver,
+                "script"=>"upload-data.pl",
+                "script_command_line"=> "@ARGV"
+          };
+	$params->{provenance} = [ $PA ];
+
+	my $saveObjectsParams = {
+		"workspace" => $params->{workspace},
+                "objects" => [
+                           {
+	                        "data"  => $params->{data},
+                                "name"  => $params->{id},
+                                "type"  => $params->{type},
+                                "meta"  => $params->{metadata},
+                                "provenance" => $params->{provenance}
+                           }
+                        ]
+        };
+
+	my $output;
+	eval { $output = $serv->save_objects( $saveObjectsParams ); };
+	if($@) {
+    		print "Object could not be saved!\n";
+    		print STDERR $@->{message}."\n";
+    		if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+    		print STDERR "\n";
+    		exit 1;
+	}
+
+	#Report the results
+	print "Object saved.  Details:\n";
+	if (scalar(@$output)>0) {
+        	foreach my $object_info (@$output) {
+			#return reference to the created object
+			print $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]."\n";
+			#return 
+                	#printObjectInfo($object_info);
+			#print $object_info,"\n";
+        	}
+	} else {
+        	print "No details returned!\n";
+	}
+	print "\n";
+}
