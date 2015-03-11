@@ -30,7 +30,26 @@ sub createMediaObject($$$$);
 sub createObject($$);
 
 #####################################################
-#readin file with metadata
+#get existing Media objects in WS to save creating 
+#new versions for the same thing.
+#as currently the media object is just the name.
+#####################################################
+my %MediaInWS = ();
+
+my $output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseBiochem.Media"} );
+
+if ( scalar(@$output)>0 ) {
+    foreach my $object_info (@$output) {
+	print  "Existing objects in ws: ".$object_info->[2]."\n";
+	$MediaInWS{ $object_info->[2] } = $object_info->[2];
+    }
+}else{
+    print  "No Existing objects of type KBaseBiochem.Media in ws\n";
+}
+
+exit(0);
+#####################################################
+#read in file with metadata
 #####################################################
 my %meta = ();
 open FILE, $FNM_META or die $!;
@@ -49,20 +68,31 @@ my $ExpNameIndex = $index[0];
 die "Multiple or non existent field in the meta file the header 'Media'\n" if scalar(@index)!=1;
 my $MediaIndex = $index[0];
 
+my @meta_data = ();
 
+#first create Media objects
+my %Media2objref = ();
 while(<FILE>){
     chomp;
+    push @meta_data, $_;
     my @l = split /\t/, $_;
     die "Wrong number of columns in meta file, line $_\n",scalar(@l)," expected 35\n" if scalar(@l)!=35;
     
+    #objectID, workspace, string_media_name, ws_client
+    $Media2objref{ $l[$MediaIndex] } = createMediaObject($l[$MediaIndex], $workspace, $l[$MediaIndex], $serv )
+	if ! exists $Media2objref{ $l[$MediaIndex] } and ! exists $MediaInWS{ $l[$MediaIndex] };
+
     for(my $i=0; $i<= $#l; ++$i){
-	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];
-	#objectID, workspace, string_media_name, ws_client
- 	print createMediaObject($l[$MediaIndex], $workspace, $l[$MediaIndex], $serv );
-	exit(0);
+	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];	
     }
 }
 close FILE;
+
+#now, that Media objects are created, create Condition and GrowthParameters objects
+foreach (@meta_data){
+    my @l = split /\t/, $_;
+    
+}
 
 #####################################################
 #readin file with log ratios
