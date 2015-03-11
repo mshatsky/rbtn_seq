@@ -58,7 +58,7 @@ while(<FILE>){
     for(my $i=0; $i<= $#l; ++$i){
 	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];
 	#objectID, workspace, string_media_name, ws_client
- 	createMediaObject($l[$MediaIndex], $workspace, $l[$MediaIndex], $serv );
+ 	print createMediaObject($l[$MediaIndex], $workspace, $l[$MediaIndex], $serv );
 	exit(0);
     }
 }
@@ -268,13 +268,12 @@ sub createObject($$){
 	if (scalar(@$output)>0) {
         	foreach my $object_info (@$output) {
 			#return reference to the created object
-			print $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]."\n";
+			return $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]."\n";
 			#return 
                 	#printObjectInfo($object_info);
 			#print $object_info,"\n";
         	}
 	} else {
-        	print "No details returned!\n";
+        	print STDERR "No details returned: ws save_objects\n";
 	}
-	print "\n";
 }
