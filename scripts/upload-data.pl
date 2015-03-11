@@ -40,8 +40,8 @@ my $output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KB
 
 if ( scalar(@$output)>0 ) {
     foreach my $object_info (@$output) {
-	print  "Existing objects in ws: ".$object_info->[2]."\n";
-	$MediaInWS{ $object_info->[2] } = $object_info->[2];
+	print  "Existing objects in ws: ".$object_info->[1]."\n";
+	$MediaInWS{ $object_info->[1] } = $object_info->[1];
     }
 }else{
     print  "No Existing objects of type KBaseBiochem.Media in ws\n";
