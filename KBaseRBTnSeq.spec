@@ -132,10 +132,9 @@ typedef string condition_ref;
 /*
   GrowthParameters describes all the conditions a particular aliquot
   was subjected to in an experiment
-@optional person description gDNA_plate gDNA_well index media growth_method group temperature pH isLiquid isAerobic shaking growth_plate_id growth_plate_wells startOD endOD total_generations
+@optional description gDNA_plate gDNA_well index media growth_method group temperature pH isLiquid isAerobic shaking growth_plate_id growth_plate_wells startOD endOD total_generations
 */
 typedef structure {
-    string person;
     string description;
     string gDNA_plate;
     string gDNA_well;
@@ -219,14 +218,16 @@ typedef string tnseq_library_ref;
   several parallel aliquots (e.g., wells or tubes), each potentially
   treated with a different set of conditions
   BarSeqExperiment object represents only one such condition
+@optional person mutant_lib_name tnseq_library
 */
 typedef structure {
-    string name;
-    tnseq_library_ref tnseq_library;
+    string person;
+    string mutant_lib_name;
     string start_date;
     string sequenced_at;
     growth_parameters_ref growth_parameters;
-    condition_ref conditions;
+    list<condition_ref> conditions;
+    tnseq_library_ref tnseq_library;
 } BarSeqExperiment;
 
 /*
