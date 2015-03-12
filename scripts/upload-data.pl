@@ -42,7 +42,7 @@ if ( scalar(@$output)>0 ) {
     foreach my $object_info (@$output) {
 	#---
 	print  "Existing objects in ws: ".$object_info->[1]."\n";
-	$Media2objref{ $object_info->[1] } = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]."\n";
+	$Media2objref{ $object_info->[1] } = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
     }
 }
 
@@ -58,7 +58,7 @@ if ( scalar(@$output)>0 ) {
     foreach my $object_info (@$output) {
 	#---
 	print  "Existing objects in ws: ".$object_info->[1]."\n";
-	$Cond2objref{ $object_info->[1] } = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]."\n";
+	$Cond2objref{ $object_info->[1] } = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
     }
 }
 
