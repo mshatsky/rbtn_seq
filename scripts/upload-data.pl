@@ -325,6 +325,9 @@ sub formKBname{
     #subst : with '_'
     $out =~ s/:/_/g;
 
+    #subst % with 'pct'
+    $out =~ s/%/pct/g;
+
     return $out;
 }
 
