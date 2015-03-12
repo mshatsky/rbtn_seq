@@ -313,7 +313,7 @@ sub createConditionObject($$$$$$){
 		"workspace" => $_[1],
 	};
 	$params->{data}->{name} = $_[3];
-	$params->{data}->{concentration} =   $_[4];
+	$params->{data}->{concentration} =   $_[4]+0;
 	$params->{data}->{units} = $_[5];
 
 	return createObject($params, $_[0]);
