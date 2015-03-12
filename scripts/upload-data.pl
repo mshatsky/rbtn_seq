@@ -473,7 +473,7 @@ sub createObject($$){
 	if (scalar(@$output)>0) {
         	foreach my $object_info (@$output) {
 			#return reference to the created object
-			return $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]."\n";
+			return $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
 			#return 
                 	#printObjectInfo($object_info);
 			#print $object_info,"\n";
