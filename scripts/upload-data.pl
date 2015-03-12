@@ -118,7 +118,7 @@ while(<FILE>){
     my $grwthname = formKBname( 
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ], 
 	$l[$ExpNameIndex],
-	$l[ getIndexOfElemExactMatch(\@header, 'Description') ];
+	$l[ getIndexOfElemExactMatch(\@header, 'Description') ]
     );
 
     #create Condition obj
