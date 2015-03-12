@@ -78,7 +78,7 @@ my $ExpNameIndex = getIndexOfElemExactMatch(\@header, 'name');
 #find Media index 
 my $MediaIndex = getIndexOfElemExactMatch(\@header, 'Media');
 
-my %Brseq2objref = ()
+my %Brseq2objref = ();
 
 while(<FILE>){
     chomp;
