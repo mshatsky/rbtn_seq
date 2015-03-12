@@ -388,8 +388,8 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$){
 	$params->{data}->{startOD} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
 	$params->{data}->{endOD} = $_[18]+0   if $_[18] !~ 'NA' and $_[18]>0;
 	$params->{data}->{total_generations} = $_[19]+0 if $_[19] !~ 'NA' and $_[19]>0;
-
-	print "test pH :",$params->{data}->{pH},":\n";
+	
+	print "Ref to media obj:".$params->{data}->{media}.":\n";
         return createObject($params, $_[0]);
 }
 
