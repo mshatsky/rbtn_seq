@@ -145,7 +145,7 @@ while(<FILE>){
     $brseqname =~ s/\s+//g;
 
     #create BarSeqExperiment obj
-    my $barseqobj = createBarSeqExperimentObj(
+    my $barseqobj = createBarSeqExperimentObject(
 	$serv, $workspace, $brseqname, 
 	$l[ getIndexOfElemExactMatch(\@header, 'Person') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
