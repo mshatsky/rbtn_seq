@@ -370,16 +370,24 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$){
 	$params->{data}->{media} = $_[7];
 	$params->{data}->{growth_method} = $_[8];
 	$params->{data}->{group} = $_[9];
-	$params->{data}->{temperature} = $_[10];
-	$params->{data}->{pH} = $_[11];
-	$params->{data}->{isLiquid} = $_[12];
-	$params->{data}->{isAerobic} = $_[13];
+	$params->{data}->{temperature} = $_[10]+0 if $_[10] !~ 'NA' and $_[10]>0;
+	$params->{data}->{pH} = $_[11]+0 if $_[11] !~ 'NA' and $_[11]>0;
+	if($_[12] =~ /liquid/i){
+	    $params->{data}->{isLiquid} = 1;
+	}elsif($_[12] =~ /solid/i){
+	    $params->{data}->{isLiquid} = 0;
+	}
+	if($_[13] =~ /aerobic/i and $_[13] !~ /anaerobic/i){
+	    $params->{data}->{isAerobic} = 1;
+	}elsif($_[13] =~ /anaerobic/i){ 
+	    $params->{data}->{isAerobic} = 0;
+	}
 	$params->{data}->{shaking} = $_[14];
 	$params->{data}->{growth_plate_id} = $_[15];
 	$params->{data}->{growth_plate_wells} = $_[16];
-	$params->{data}->{startOD} = $_[17];
-	$params->{data}->{endOD} = $_[18];
-	$params->{data}->{total_generations} = $_[19];
+	$params->{data}->{startOD} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
+	$params->{data}->{endOD} = $_[18]+0   if $_[18] !~ 'NA' and $_[18]>0;
+	$params->{data}->{total_generations} = $_[19]+0 if $_[19] !~ 'NA' and $_[19]>0;
 
 	print "test pH :",$params->{data}->{pH},":\n";
         return createObject($params, $_[0]);
