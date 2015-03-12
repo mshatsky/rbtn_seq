@@ -22,7 +22,7 @@ die "Can't open file $FNM_LOGRT\n" if ! -e $FNM_LOGRT;
 my $serv = get_ws_client();
 
 sub createObject($$);
-sub createConditionObject($$$);
+sub createConditionObject($$$$$$);
 sub createMediaObject($$$);
 sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$);
 sub createBarSeqExperimentObject($$$$$$$$$);
