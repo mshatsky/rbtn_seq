@@ -386,8 +386,8 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$){
 	    $params->{data}->{isAerobic} = 0;
 	}
 	$params->{data}->{shaking} = $_[14];
-	$params->{data}->{growth_plate_id} = $_[15];
-	$params->{data}->{growth_plate_wells} = $_[16];
+	$params->{data}->{growth_plate_id} = $_[15] if length($_[15])>0;
+	$params->{data}->{growth_plate_wells} = $_[16] if length($_[16])>0;;
 	$params->{data}->{startOD} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
 	$params->{data}->{endOD} = $_[18]+0   if $_[18] !~ 'NA' and $_[18]>0;
 	$params->{data}->{total_generations} = $_[19]+0 if $_[19] !~ 'NA' and $_[19]>0;
