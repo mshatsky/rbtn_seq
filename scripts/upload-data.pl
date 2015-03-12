@@ -329,7 +329,7 @@ sub createMediaObject($$$){
 		"workspace" => $_[1],
 	};
 	$params->{data}->{name} = $_[2];
-	$params->{data}->{id} =   "kb|type.0";#$_[2];
+	$params->{data}->{id} =   $_[2];#"kb|type.0";#$_[2];
 	$params->{data}->{isDefined} = 0;
 	$params->{data}->{type} = "custom";
 	$params->{data}->{isMinimal} = 0;
@@ -358,6 +358,9 @@ sub createMediaObject($$$){
 #18    float endOD;
 #19    float total_generations;
 sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$){
+    foreach(@_){
+	print "param:$_:\n";
+    }
 	my $params = {
 		"name" => $_[2],
 		"type" => "KBaseRBTnSeq.GrowthParameters",
