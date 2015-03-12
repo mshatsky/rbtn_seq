@@ -13,17 +13,17 @@ typedef int bool;
 typedef string genome_ref;
 
 /*
-@id ws KBaseGenomes.Contig;
+@id ws KBaseGenomes.Contig
 */
 typedef string contig_ref;
 
 /*
-@id ws KBaseCommunities.Sample;
+@id ws KBaseCommunities.Sample
 */
 typedef string sample_ref;
 
 /*
-@id ws KBaseBiochem.Media;
+@id ws KBaseBiochem.Media
 */
 typedef string media_ref;
 
