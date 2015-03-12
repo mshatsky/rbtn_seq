@@ -28,7 +28,7 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$);
 sub createBarSeqExperimentObject($$$$$$$$$);
 
 sub getIndexOfElemExactMatch($$);
-sub formKBname();
+sub formKBname(@);
 
 #####################################################
 #get existing Media objects in WS to save creating 
@@ -86,7 +86,7 @@ while(<FILE>){
     my @l = split /\t/, $_;
     die "Wrong number of columns in meta file, line $_\n",scalar(@l)," expected 35\n" if scalar(@l)!=35;
     
-    my $medname = formKBname($l[$MediaIndex]);
+    my $medname = formKBname( $l[$MediaIndex] );
 
     #ws_client, workspace, string_media_name 
     $Media2objref{ $medname } = createMediaObject(
