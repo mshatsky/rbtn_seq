@@ -331,6 +331,10 @@ sub formKBname{
     #subst / with '_over_'
     $out =~ s/\//_over_/g;
 
+    #subst () with '_'
+    $out =~ s/\(/_/g;
+    $out =~ s/\)/_/g;
+
 
     return $out;
 }
