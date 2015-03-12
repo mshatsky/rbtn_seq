@@ -28,6 +28,7 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$);
 sub createBarSeqExperimentObject($$$$$$$$$);
 
 sub getIndexOfElemExactMatch($$);
+sub formKBname();
 
 #####################################################
 #get existing Media objects in WS to save creating 
@@ -85,16 +86,19 @@ while(<FILE>){
     my @l = split /\t/, $_;
     die "Wrong number of columns in meta file, line $_\n",scalar(@l)," expected 35\n" if scalar(@l)!=35;
     
+    my $medname = formKBname($l[$MediaIndex]);
+
     #ws_client, workspace, string_media_name 
-    $Media2objref{ $l[$MediaIndex] } = createMediaObject($serv, $workspace, $l[$MediaIndex])
-           if ! exists $Media2objref{ $l[$MediaIndex] } and ! exists $Media2objref{ $l[$MediaIndex] };
+    $Media2objref{ $medname } = createMediaObject(
+	$serv, 
+	$workspace, 
+	$medname)           if ! exists $Media2objref{ $medname };
 
     #get conditions 1 and 2
     my $c1 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_1') ];
     my $conc1 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_1') ];
     my $u1 = $l[ getIndexOfElemExactMatch(\@header, 'Units_1') ];
-    my $cname1 = "$c1 | $conc1 | $u1";
-    $cname1 =~ s/\s+//g;
+    my $cname1 = formKBname($c1, $conc1, $u1);
 	
     if($conc1 !~ /NA/){
     	$Cond2objref{ $cname1 } = createConditionObject($serv, $workspace, $cname1, $c1, $conc1, $u1 ) 
@@ -104,16 +108,18 @@ while(<FILE>){
     my $c2 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_2') ];
     my $conc2 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_2') ];
     my $u2 = $l[ getIndexOfElemExactMatch(\@header, 'Units_2') ];
-    my $cname2 = "$c2 | $conc2 | $u2";
-    $cname2 =~ s/\s+//g;
+    my $cname2 = formKBname($c2, $conc2, $u2);
 
     if($conc2 !~ /NA/){
 	$Cond2objref{ $cname2 } = createConditionObject($serv, $workspace, $cname2, $c2, $conc2, $u2 ) 
 		if ! exists $Cond2objref{ $cname2 };
     }
 
-    my $grwthname = $l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ]." | ".$l[$ExpNameIndex]." | ".$l[ getIndexOfElemExactMatch(\@header, 'Description') ];
-    $grwthname =~ s/\s+//g;
+    my $grwthname = formKBname( 
+	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ], 
+	$l[$ExpNameIndex],
+	$l[ getIndexOfElemExactMatch(\@header, 'Description') ];
+    );
 
     #create Condition obj
     my $growthobj = createGrowthParamsObj(
@@ -141,8 +147,11 @@ while(<FILE>){
     push @conds, $Cond2objref{ $cname1 } if exists $Cond2objref{ $cname1 };
     push @conds, $Cond2objref{ $cname2 } if exists $Cond2objref{ $cname2 };
 
-    my $brseqname = $l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ]." | ".$l[$ExpNameIndex]." | ".$l[ getIndexOfElemExactMatch(\@header, 'Description') ];	
-    $brseqname =~ s/\s+//g;
+    my $brseqname = formKBname( 
+	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
+	$l[$ExpNameIndex],
+	$l[ getIndexOfElemExactMatch(\@header, 'Description') ]
+    );
 
     #create BarSeqExperiment obj
     my $barseqobj = createBarSeqExperimentObject(
@@ -302,6 +311,20 @@ if (scalar(@$output)>0) {
 print "\n";
 exit(0);
 
+#join array of strings into one string and subs 
+#illegal chars with something else
+sub formKBname{
+    my $out = join('|', @_);
+
+    #remove white spaces
+    $out =~ s/\s+//g;
+
+    #subst , with '_'
+    $out =~ s/,/_/g;
+
+    #subst : with '_'
+    $out =~ s/:/_/g;
+}
 
 #creates a new KBaseRBTnSeq.Condition object
 #input:  ws_client, workspace, obj name 
