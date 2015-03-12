@@ -324,6 +324,8 @@ sub formKBname{
 
     #subst : with '_'
     $out =~ s/:/_/g;
+
+    return $out;
 }
 
 #creates a new KBaseRBTnSeq.Condition object
