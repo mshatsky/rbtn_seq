@@ -94,14 +94,14 @@ while(<FILE>){
     my $con1 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_1') ];
     my $u1 = $l[ getIndexOfElemExactMatch(\@header, 'Units_1') ];
 
-    $Cond2objref{ "$c1 : $con1 : $u1" } = createConditionObject($serv, $workspace, "$c1 : $con1 : $u1", "$c1 : $con1 : $u1", $c1, $con1, $u1 ) 
+    $Cond2objref{ "$c1 : $con1 : $u1" } = createConditionObject($serv, $workspace, "$c1 : $con1 : $u1", $c1, $con1, $u1 ) 
 	    if ! exists $Cond2objref{ "$c1 : $con1 : $u1" };
 
     my $c2 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_2') ];
     my $con2 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_2') ];
     my $u2 = $l[ getIndexOfElemExactMatch(\@header, 'Units_2') ];
 
-    $Cond2objref{ "$c2 : $con2 : $u2" } = createConditionObject($serv, $workspace, "$c2 : $con2 : $u2",  "$c2 : $con2 : $u2", $c2, $con2, $u2 ) 
+    $Cond2objref{ "$c2 : $con2 : $u2" } = createConditionObject($serv, $workspace, "$c2 : $con2 : $u2", $c2, $con2, $u2 ) 
 	    if ! exists $Cond2objref{ "$c2 : $con2 : $u2" };
 
     #create Condition obj
