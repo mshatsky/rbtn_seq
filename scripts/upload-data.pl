@@ -329,7 +329,7 @@ sub formKBname{
     $out =~ s/%/pct/g;
 
     #subst / with '_over_'
-    $out =~ s/\\/_over_/g;
+    $out =~ s/\//_over_/g;
 
 
     return $out;
