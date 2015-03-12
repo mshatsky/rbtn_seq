@@ -52,7 +52,7 @@ if ( scalar(@$output)>0 ) {
 #####################################################
 my %Cond2objref = ();
 
-my $output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseRBTnSeq.Condition"} );
+$output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseRBTnSeq.Condition"} );
 
 if ( scalar(@$output)>0 ) {
     foreach my $object_info (@$output) {
@@ -78,15 +78,16 @@ my $ExpNameIndex = getIndexOfElemExactMatch(\@header, 'name');
 #find Media index 
 my $MediaIndex = getIndexOfElemExactMatch(\@header, 'Media');
 
+my %Brseq2objref = ()
+
 while(<FILE>){
     chomp;
-    push @meta_data, $_;
     my @l = split /\t/, $_;
     die "Wrong number of columns in meta file, line $_\n",scalar(@l)," expected 35\n" if scalar(@l)!=35;
     
     #ws_client, workspace, string_media_name 
     $Media2objref{ $l[$MediaIndex] } = createMediaObject($serv, $workspace, $l[$MediaIndex])
-           if ! exists $Media2objref{ $l[$MediaIndex] } and ! exists $MediaInWS{ $l[$MediaIndex] };
+           if ! exists $Media2objref{ $l[$MediaIndex] } and ! exists $Media2objref{ $l[$MediaIndex] };
 
     #get conditions 1 and 2
     my $c1 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_1') ];
@@ -139,9 +140,9 @@ while(<FILE>){
 	);
     
     die "Two BarSeq experiments with the same name : ".$l[$ExpNameIndex]."\n" if
-        exists $brseq2obj{ $l[$ExpNameIndex] };
+        exists $Brseq2objref{ $l[$ExpNameIndex] };
 
-    $brseq2obj{ $l[$ExpNameIndex] } = $barseqobj;
+    $Brseq2objref{ $l[$ExpNameIndex] } = $barseqobj;
     #for(my $i=0; $i<= $#l; ++$i){
 #	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];	
  #   }
@@ -150,11 +151,6 @@ close FILE;
 
 exit(0);
 
-#now, that Media objects are created, create Condition and GrowthParameters objects
-foreach (@meta_data){
-    my @l = split /\t/, $_;
-    
-}
 
 #####################################################
 #readin file with log ratios
@@ -172,7 +168,7 @@ foreach (@headerData){
 }
 
 for(my $i=4; $i<= $#headerData; ++$i){
-    die "Experiment ".$headerData[$i]." is not in meta file\n" if !exists $meta{ $headerData[$i] };
+    die "Experiment ".$headerData[$i]." is not in meta file\n" if !exists $Brseq2objref{ $headerData[$i] };
 }
 #foreach (@headerData){
 #    print "test: $_\n";
