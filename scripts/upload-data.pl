@@ -91,22 +91,33 @@ while(<FILE>){
 
     #get conditions 1 and 2
     my $c1 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_1') ];
-    my $con1 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_1') ];
+    my $conc1 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_1') ];
     my $u1 = $l[ getIndexOfElemExactMatch(\@header, 'Units_1') ];
-
-    $Cond2objref{ "$c1 : $con1 : $u1" } = createConditionObject($serv, $workspace, "$c1 : $con1 : $u1", $c1, $con1, $u1 ) 
-	    if ! exists $Cond2objref{ "$c1 : $con1 : $u1" };
+    my $cname1 = "$c1 | $conc1 | $u1";
+    $cname1 =~ s/\s+//g;
+	
+    if($conc1 !~ /NA/){
+    	$Cond2objref{ $cname1 } = createConditionObject($serv, $workspace, $cname1, $c1, $conc1, $u1 ) 
+	    if ! exists $Cond2objref{ $cname1 };
+    }
 
     my $c2 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_2') ];
-    my $con2 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_2') ];
+    my $conc2 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_2') ];
     my $u2 = $l[ getIndexOfElemExactMatch(\@header, 'Units_2') ];
+    my $cname2 = "$c2 | $conc2 | $u2";
+    $cname2 =~ s/\s+//g;
 
-    $Cond2objref{ "$c2 : $con2 : $u2" } = createConditionObject($serv, $workspace, "$c2 : $con2 : $u2", $c2, $con2, $u2 ) 
-	    if ! exists $Cond2objref{ "$c2 : $con2 : $u2" };
+    if($conc2 !~ /NA/){
+	$Cond2objref{ $cname2 } = createConditionObject($serv, $workspace, $cname2, $c2, $conc2, $u2 ) 
+		if ! exists $Cond2objref{ $cname2 };
+    }
+
+    my $grwthname = $l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ]." | ".$l[$ExpNameIndex]." | ".$l[ getIndexOfElemExactMatch(\@header, 'Description') ];
+    $grwthname =~ s/\s+//g;
 
     #create Condition obj
     my $growthobj = createGrowthParamsObj(
-	 $serv, $workspace, $l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ]." : ".$l[$ExpNameIndex]." : ".$l[ getIndexOfElemExactMatch(\@header, 'Description') ],
+	$serv, $workspace, $grwthname,
 	$l[ getIndexOfElemExactMatch(\@header, 'Description') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'gDNA.plate') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'gDNA.well') ],
@@ -126,17 +137,22 @@ while(<FILE>){
 	$l[ getIndexOfElemExactMatch(\@header, 'Total.Generations') ]
 	);
 
+    my @conds = ();
+    push @conds, $Cond2objref{ $cname1 } if exists $Cond2objref{ $cname1 };
+    push @conds, $Cond2objref{ $cname2 } if exists $Cond2objref{ $cname2 };
+
+    my $brseqname = $l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ]." | ".$l[$ExpNameIndex]." | ".$l[ getIndexOfElemExactMatch(\@header, 'Description') ];	
+    $brseqname =~ s/\s+//g;
 
     #create BarSeqExperiment obj
     my $barseqobj = createBarSeqExperimentObj(
-	$serv, $workspace, $l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ]." : ".$l[$ExpNameIndex]." : ".$l[ getIndexOfElemExactMatch(\@header, 'Description') ],
+	$serv, $workspace, $brseqname, 
 	$l[ getIndexOfElemExactMatch(\@header, 'Person') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Date_pool_expt_started') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Sequenced.At') ],
 	$growthobj,
-	"c2" eq "NA" ? [( $Cond2objref{ "$c1 : $con1 : $u1" } )] : 
-	               [( $Cond2objref{ "$c1 : $con1 : $u1" }, $Cond2objref{ "$c2 : $con2 : $u2" } )],
+	[ @conds ]
 	);
     
     die "Two BarSeq experiments with the same name : ".$l[$ExpNameIndex]."\n" if
@@ -365,7 +381,8 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$){
 	$params->{data}->{endOD} = $_[18];
 	$params->{data}->{total_generations} = $_[19];
 
-	return createObject($params, $_[0]);
+	print "test pH :",$params->{data}->{pH},":\n";
+        return createObject($params, $_[0]);
 }
 
 
@@ -398,6 +415,8 @@ sub createBarSeqExperimentObject($$$$$$$$$){
 #input: $params, ws_client
 sub createObject($$){
 	my ($params, $serv) = @_;
+
+	print "Saving object named : ". $params->{name}. " : Typed : ".$params->{type}. " :\n";
 
 	my $ws_ver = '';
 	eval { $ws_ver = $serv->ver(); };
