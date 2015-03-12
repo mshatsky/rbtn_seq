@@ -329,7 +329,7 @@ sub createMediaObject($$$){
 		"workspace" => $_[1],
 	};
 	$params->{data}->{name} = $_[2];
-	$params->{data}->{id} =   $_[2];
+	$params->{data}->{id} =   "kb|type.0";#$_[2];
 	$params->{data}->{isDefined} = 0;
 	$params->{data}->{type} = "custom";
 	$params->{data}->{isMinimal} = 0;
