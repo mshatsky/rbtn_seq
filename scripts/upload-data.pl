@@ -60,10 +60,10 @@ my $genome = $serv->get_object({
     #instance => $jobdata->{TranscriptSet_inst},
     #auth => $job->{auth}
 			       });
-foreach(@{$genome->{metadata}}){
-    print "$_\n";
-}
-exit(0);
+#foreach(@{$genome->{metadata}}){
+#    print "$_\n";
+#}
+
 
 my %Aliases2FeatID = ();
 print "Genome: ",$genome->{data}->{scientific_name}, "\n";
@@ -302,7 +302,7 @@ my $params = {
     "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
 };
 
-$params->{data}->{genome} = $genome->{metadata}->[6]."/".$genome->{metadata}->[0]."/".$genome->{metadata}->[4];
+$params->{data}->{genome} = $genome_ref;
 $params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, $elem )]   )]; 
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
