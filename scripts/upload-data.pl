@@ -93,15 +93,17 @@ while(<FILE>){
     my @l = split /\t/, $_;
     die "Wrong number of columns in meta file, line $_\n",scalar(@l)," expected 35\n" if scalar(@l)!=35;
     
-    my $medname = formKBname( $l[$MediaIndex] );
+    if(length($l[$MediaIndex]) > 0){ #some experiments don't have Media
+	my $medname = formKBname( $l[$MediaIndex] );
 
-    #ws_client, workspace, string_media_name 
-    $Media2objref{ $medname } = createMediaObject($medname)           
+	#ws_client, workspace, string_media_name 
+	$Media2objref{ $medname } = createMediaObject($medname)           
             if ! exists $Media2objref{ $medname };
+	
+	die "Two experiments with the same name ".$l[$ExpNameIndex]."\n" if exists $Exprname2mediaName{ $l[$ExpNameIndex] };
+	$Exprname2mediaName{ $l[$ExpNameIndex] } = $medname; 
+    }
 
-    die "Two experiments with the same name ".$l[$ExpNameIndex]."\n" if exists $Exprname2mediaName{ $l[$ExpNameIndex] };
-    $Exprname2mediaName{ $l[$ExpNameIndex] } = $medname; 
-    
     #get conditions 1 and 2
     my $c1 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_1') ];
     my $conc1 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_1') ];
@@ -160,7 +162,7 @@ foreach (@meta){
 	$l[ getIndexOfElemExactMatch(\@header, 'gDNA.plate') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'gDNA.well') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Index') ],
-	$Media2objref{ $Exprname2mediaName{ $l[$ExpNameIndex] } },
+	exists $Exprname2mediaName{ $l[$ExpNameIndex] } ? $Media2objref{ $Exprname2mediaName{ $l[$ExpNameIndex] } } : 'NA',
 	$l[ getIndexOfElemExactMatch(\@header, 'Growth.Method') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Group') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Temperature') ],
@@ -451,7 +453,7 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$){
     $params->{data}->{gDNA_plate}  = $_[2];
     $params->{data}->{gDNA_well} = $_[3];
     $params->{data}->{index} = $_[4];
-    $params->{data}->{media} = $_[5];
+    $params->{data}->{media} = $_[5] if $_[5] ne 'NA';
     $params->{data}->{growth_method} = $_[6];
     $params->{data}->{group} = $_[7];
     $params->{data}->{temperature} = $_[8]+0 if $_[8] !~ 'NA' and $_[8]>0;
