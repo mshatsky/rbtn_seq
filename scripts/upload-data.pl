@@ -287,7 +287,8 @@ my $params = {
 $params->{data}->{experiment} = $Brseq2objref{ (keys %Brseq2objref)[0] };
 $params->{data}->{results} = [ ($elem) ];
 
-my %BrseqRes2objref{ $name } = $params;
+my %BrseqRes2objref = ();
+$BrseqRes2objref{ $name } = $params;
 createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
