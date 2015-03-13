@@ -22,10 +22,12 @@ die "Can't open file $FNM_LOGRT\n" if ! -e $FNM_LOGRT;
 my $serv = get_ws_client();
 
 sub createObject($$);
-sub createConditionObject($$$$$$);
-sub createMediaObject($$$);
-sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$);
-sub createBarSeqExperimentObject($$$$$$$$$);
+sub createObjects($$@);
+sub createConditionObject($$$$);
+sub createMediaObject($);
+sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$);
+sub createBarSeqExperimentObject($$$$$$$);
+sub createObjectsForMissingRefs($$$){
 
 sub getIndexOfElemExactMatch($$);
 sub formKBname(@);
@@ -79,21 +81,27 @@ my $ExpNameIndex = getIndexOfElemExactMatch(\@header, 'name');
 #find Media index 
 my $MediaIndex = getIndexOfElemExactMatch(\@header, 'Media');
 
-my %Brseq2objref = ();
+my %Exprname2cond1Name = ();
+my %Exprname2cond2Name = ();
+my %Exprname2mediaName = ();
 
+my @meta = (); #store all lines from the file for the following passes
 while(<FILE>){
     chomp;
+    push @meta, $_;
+
     my @l = split /\t/, $_;
     die "Wrong number of columns in meta file, line $_\n",scalar(@l)," expected 35\n" if scalar(@l)!=35;
     
     my $medname = formKBname( $l[$MediaIndex] );
 
     #ws_client, workspace, string_media_name 
-    $Media2objref{ $medname } = createMediaObject(
-	$serv, 
-	$workspace, 
-	$medname)           if ! exists $Media2objref{ $medname };
+    $Media2objref{ $medname } = createMediaObject($medname)           
+            if ! exists $Media2objref{ $medname };
 
+    die "Two experiments with the same name ".$l[$ExpNameIndex]."\n" if exists $Exprname2mediaName{ $l[$ExpNameIndex] };
+    $Exprname2mediaName{ $l[$ExpNameIndex] } = $medname; 
+    
     #get conditions 1 and 2
     my $c1 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_1') ];
     my $conc1 = $l[ getIndexOfElemExactMatch(\@header, 'Concentration_1') ];
@@ -101,8 +109,10 @@ while(<FILE>){
     my $cname1 = formKBname($c1, $conc1, $u1);
 	
     if($conc1 !~ /NA/){
-    	$Cond2objref{ $cname1 } = createConditionObject($serv, $workspace, $cname1, $c1, $conc1, $u1 ) 
+    	$Cond2objref{ $cname1 } = createConditionObject($cname1, $c1, $conc1, $u1 ) 
 	    if ! exists $Cond2objref{ $cname1 };
+
+	$Exprname2cond1Name{ $l[$ExpNameIndex] } = $cname1;
     }
 
     my $c2 = $l[ getIndexOfElemExactMatch(\@header, 'Condition_2') ];
@@ -111,24 +121,46 @@ while(<FILE>){
     my $cname2 = formKBname($c2, $conc2, $u2);
 
     if($conc2 !~ /NA/){
-	$Cond2objref{ $cname2 } = createConditionObject($serv, $workspace, $cname2, $c2, $conc2, $u2 ) 
+	$Cond2objref{ $cname2 } = createConditionObject($cname2, $c2, $conc2, $u2 ) 
 		if ! exists $Cond2objref{ $cname2 };
-    }
 
+	$Exprname2cond2Name{ $l[$ExpNameIndex] } = $cname2;
+    }
+}
+close FILE;
+
+
+#####################################################
+#create Condition objs in ws
+#####################################################
+createObjectsForMissingRefs($serv, $workspace, \%Cond2objref);
+
+#####################################################
+#create Media objs in ws
+#####################################################
+createObjectsForMissingRefs($serv, $workspace, \%Media2objref);
+
+#####################################################
+#make a second pass and build GrowthParams objs
+#####################################################
+my %Grwth2objref = ();
+
+foreach (@meta){
+    my @l = split /\t/, $_;
+  
     my $grwthname = formKBname( 
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ], 
 	$l[$ExpNameIndex],
 	$l[ getIndexOfElemExactMatch(\@header, 'Description') ]
     );
 
-    #create Condition obj
     my $growthobj = createGrowthParamsObj(
-	$serv, $workspace, $grwthname,
+	$grwthname,
 	$l[ getIndexOfElemExactMatch(\@header, 'Description') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'gDNA.plate') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'gDNA.well') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Index') ],
-	$Media2objref{ $l[$MediaIndex] },
+	$Media2objref{ $Exprname2mediaName{ $l[$ExpNameIndex] } },
 	$l[ getIndexOfElemExactMatch(\@header, 'Growth.Method') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Group') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Temperature') ],
@@ -142,11 +174,23 @@ while(<FILE>){
 	$l[ getIndexOfElemExactMatch(\@header, 'EndOD') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Total.Generations') ]
 	);
+    $Grwth2objref{ $l[$ExpNameIndex] } = $growthobj;
+}
+
+createObjectsForMissingRefs($serv, $workspace, \%Grwth2objref);
+
+#####################################################
+#make a third pass and build BarSeqExpr objs
+#####################################################
+my %Brseq2objref = ();
+
+foreach (@meta){
+    my @l = split /\t/, $_;
 
     my @conds = ();
-    push @conds, $Cond2objref{ $cname1 } if exists $Cond2objref{ $cname1 };
-    push @conds, $Cond2objref{ $cname2 } if exists $Cond2objref{ $cname2 };
-
+    push @conds, $Cond2objref{ $Exprname2cond1Name{ $l[$ExpNameIndex] } } if exists $Exprname2cond1Name{ $l[$ExpNameIndex] };
+    push @conds, $Cond2objref{ $Exprname2cond2Name{ $l[$ExpNameIndex] } } if exists $Exprname2cond2Name{ $l[$ExpNameIndex] };
+   
     my $brseqname = formKBname( 
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
 	$l[$ExpNameIndex],
@@ -155,12 +199,12 @@ while(<FILE>){
 
     #create BarSeqExperiment obj
     my $barseqobj = createBarSeqExperimentObject(
-	$serv, $workspace, $brseqname, 
+	$brseqname, 
 	$l[ getIndexOfElemExactMatch(\@header, 'Person') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Date_pool_expt_started') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Sequenced.At') ],
-	$growthobj,
+	$Grwth2objref{ $l[$ExpNameIndex] },
 	[ @conds ]
 	);
     
@@ -172,7 +216,9 @@ while(<FILE>){
 #	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];	
  #   }
 }
-close FILE;
+
+createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
+
 
 exit(0);
 
@@ -316,8 +362,8 @@ exit(0);
 sub formKBname{
     my $out = join('|', @_);
 
-    #remove white spaces
-    $out =~ s/\s+//g;
+    #subs white spaces with '_'
+    $out =~ s/\s+/_/g;
 
     #subst , with '_'
     $out =~ s/,/_/g;
@@ -334,128 +380,200 @@ sub formKBname{
     #subst () with '_'
     $out =~ s/\(/_/g;
     $out =~ s/\)/_/g;
-
+    
+    #subst ; with '_'
+    $out =~ s/\;/_/g;
 
     return $out;
 }
 
 #creates a new KBaseRBTnSeq.Condition object
-#input:  ws_client, workspace, obj name 
-#condition name, concentration, units ) 
-sub createConditionObject($$$$$$){
+#input:  obj name, condition name, concentration, units
+sub createConditionObject($$$$){
 	my $params = {
-		"name" => $_[2],
+		"name" => $_[0],
 		"type" => "KBaseRBTnSeq.Condition",
-		"workspace" => $_[1],
 	};
-	$params->{data}->{name} = $_[3];
-	$params->{data}->{concentration} =   $_[4]+0;
-	$params->{data}->{units} = $_[5];
+	$params->{data}->{name} = $_[1];
+	$params->{data}->{concentration} =   $_[2]+0;
+	$params->{data}->{units} = $_[3];
 
-	return createObject($params, $_[0]);
+	return $params;
 }
 
 
 #creates a new KBaseBiochem.Media object
-#input:  ws_client, workspace, obj_name 
-sub createMediaObject($$$){
+#input:  obj_name 
+sub createMediaObject($){
 	my $params = {
-		"name" => $_[2],
+		"name" => $_[0],
 		"type" => "KBaseBiochem.Media",
-		"workspace" => $_[1],
 	};
-	$params->{data}->{name} = $_[2];
-	$params->{data}->{id} =   $_[2];#"kb|type.0";#$_[2];
+	$params->{data}->{name} = $_[0];
+	$params->{data}->{id} =   $_[0];#"kb|type.0";#$_[2];
 	$params->{data}->{isDefined} = 0;
 	$params->{data}->{type} = "custom";
 	$params->{data}->{isMinimal} = 0;
 	$params->{data}->{mediacompounds} = [];
 	
-	return createObject($params, $_[0]);
+	return $params;
 }
 
 #creates a new KBaseRBTnSeq.GrowthParameters object
-#input:  ws_client, workspace, obj name 
-#3    string description;
-#4    string gDNA_plate;
-#5    string gDNA_well;
-#6    string index;
-#7    media_ref media;
-#8    string growth_method;
-#9    string group;
-#10    float temperature;
-#11    float pH;
-#12    bool isLiquid;
-#13    bool isAerobic;
-#14    string shaking;
-#15    string growth_plate_id;
-#16    string growth_plate_wells;
-#17    float startOD;
-#18    float endOD;
-#19    float total_generations;
-sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$$$){
+#input: 
+#0    obj name 
+#1    string description;
+#2    string gDNA_plate;
+#3    string gDNA_well;
+#4    string index;
+#5    media_ref media;
+#6    string growth_method;
+#7    string group;
+#8    float temperature;
+#9    float pH;
+#10    bool isLiquid;
+#11    bool isAerobic;
+#12    string shaking;
+#13    string growth_plate_id;
+#14    string growth_plate_wells;
+#15    float startOD;
+#16    float endOD;
+#17    float total_generations;
+sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$){
     foreach(@_){
 	print "param:$_:\n";
     }
 	my $params = {
-		"name" => $_[2],
+		"name" => $_[0],
 		"type" => "KBaseRBTnSeq.GrowthParameters",
-		"workspace" => $_[1],
 	};
-	$params->{data}->{description} = $_[3];
-	$params->{data}->{gDNA_plate}  = $_[4];
-	$params->{data}->{gDNA_well} = $_[5];
-	$params->{data}->{index} = $_[6];
-	$params->{data}->{media} = $_[7];
-	$params->{data}->{growth_method} = $_[8];
-	$params->{data}->{group} = $_[9];
-	$params->{data}->{temperature} = $_[10]+0 if $_[10] !~ 'NA' and $_[10]>0;
-	$params->{data}->{pH} = $_[11]+0 if $_[11] !~ 'NA' and $_[11]>0;
-	if($_[12] =~ /liquid/i){
+	$params->{data}->{description} = $_[1];
+	$params->{data}->{gDNA_plate}  = $_[2];
+	$params->{data}->{gDNA_well} = $_[3];
+	$params->{data}->{index} = $_[4];
+	$params->{data}->{media} = $_[5];
+	$params->{data}->{growth_method} = $_[6];
+	$params->{data}->{group} = $_[7];
+	$params->{data}->{temperature} = $_[8]+0 if $_[8] !~ 'NA' and $_[8]>0;
+	$params->{data}->{pH} = $_[9]+0 if $_[9] !~ 'NA' and $_[9]>0;
+	if($_[10] =~ /liquid/i){
 	    $params->{data}->{isLiquid} = 1;
-	}elsif($_[12] =~ /solid/i){
+	}elsif($_[10] =~ /solid/i){
 	    $params->{data}->{isLiquid} = 0;
 	}
-	if($_[13] =~ /aerobic/i and $_[13] !~ /anaerobic/i){
+	if($_[11] =~ /aerobic/i and $_[11] !~ /anaerobic/i){
 	    $params->{data}->{isAerobic} = 1;
-	}elsif($_[13] =~ /anaerobic/i){ 
+	}elsif($_[11] =~ /anaerobic/i){ 
 	    $params->{data}->{isAerobic} = 0;
 	}
-	$params->{data}->{shaking} = $_[14];
-	$params->{data}->{growth_plate_id} = $_[15] if length($_[15])>0;
-	$params->{data}->{growth_plate_wells} = $_[16] if length($_[16])>0;;
-	$params->{data}->{startOD} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
-	$params->{data}->{endOD} = $_[18]+0   if $_[18] !~ 'NA' and $_[18]>0;
-	$params->{data}->{total_generations} = $_[19]+0 if $_[19] !~ 'NA' and $_[19]>0;
+	$params->{data}->{shaking} = $_[12];
+	$params->{data}->{growth_plate_id} = $_[13] if length($_[13])>0;
+	$params->{data}->{growth_plate_wells} = $_[14] if length($_[14])>0;;
+	$params->{data}->{startOD} = $_[15]+0 if $_[15] !~ 'NA' and $_[15]>0;
+	$params->{data}->{endOD} = $_[16]+0   if $_[16] !~ 'NA' and $_[16]>0;
+	$params->{data}->{total_generations} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
 	
 	print "Ref to media obj:".$params->{data}->{media}.":\n";
-        return createObject($params, $_[0]);
+        return $params;
 }
 
 
 #create BarSeqExperiment obj
-#input:  ws_client, workspace, obj_name 
-#3 person
-#4 mutant_lib_name
-#5 start_date
-#6 sequenced_at
-#7 growth_parameters_ref growth_parameters
-#8 list<condition_ref> conditions;
-sub createBarSeqExperimentObject($$$$$$$$$){
+#input:  
+#0 obj_name 
+#1 person
+#2 mutant_lib_name
+#3 start_date
+#4 sequenced_at
+#5 growth_parameters_ref growth_parameters
+#6 list<condition_ref> conditions;
+sub createBarSeqExperimentObject($$$$$$$){
 	my $params = {
-		"name" => $_[2],
+		"name" => $_[0],
 		"type" => "KBaseRBTnSeq.BarSeqExperiment",
-		"workspace" => $_[1],
 	};
-	$params->{data}->{person} = $_[3];
-	$params->{data}->{mutant_lib_name} =   $_[4];
-	$params->{data}->{start_date} = $_[5];
-	$params->{data}->{sequenced_at} = $_[6];
-	$params->{data}->{growth_parameters} = $_[7];
-	$params->{data}->{conditions} = $_[8];
+	$params->{data}->{person} = $_[1];
+	$params->{data}->{mutant_lib_name} =   $_[2];
+	$params->{data}->{start_date} = $_[3];
+	$params->{data}->{sequenced_at} = $_[4];
+	$params->{data}->{growth_parameters} = $_[5];
+	$params->{data}->{conditions} = $_[6];
 
-	return createObject($params, $_[0]);
+	return $params;
 }
+
+
+#creates new objects
+#input: ws_client, ws_name, array of $params
+sub createObjects($$@){
+	my ($serv, $workspace, @params) = @_;
+
+	#print "Saving object named : ". $params->{name}. " : Typed : ".$params->{type}. " :\n";
+
+	my $ws_ver = '';
+	eval { $ws_ver = $serv->ver(); };
+	if($@) {
+    		print "Object could not be saved! Error connecting to the WS server.\n";
+    		print STDERR $@->{message}."\n";
+    		if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+    		print STDERR "\n";
+    		exit 1;
+	}
+
+	# set provenance info
+	my $PA = {
+                "service"=>"Workspace",
+                "service_ver"=>$ws_ver,
+                "script"=>"upload-data.pl",
+                "script_command_line"=> "@ARGV"
+          };
+	$params->{provenance} = [ $PA ];
+
+	my $saveObjectsParams = {
+		"workspace" => $workspace,
+                "objects" => [ ]  #add objects next
+	}
+	
+	foreach my $p (@params){
+	    push @{$saveObjectsParams->{objects}},
+                           {
+	                        "data"  => $p->{data},
+                                "name"  => $p->{name},
+                                "type"  => $p->{type},
+                                "meta"  => $p->{metadata},
+                                "provenance" => $p->{provenance}
+                           };
+	}
+
+	my $output;
+	eval { $output = $serv->save_objects( $saveObjectsParams ); };
+	if($@) {
+    		print "Object could not be saved!\n";
+    		print STDERR $@->{message}."\n";
+    		if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+    		print STDERR "\n";
+    		exit 1;
+	}
+
+	my @refs = ();
+	#Report the results
+	print "Object saved.  Details:\n";
+	if (scalar(@$output)>0) {
+        	foreach my $object_info (@$output) {
+			#return reference to the created object
+		    push @refs, $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
+		        #return $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
+			#return 
+                	#printObjectInfo($object_info);
+			#print $object_info,"\n";
+        	}
+	} else {
+        	print STDERR "No details returned: ws save_objects\n";
+	}
+
+	return @refs;
+}
+
 
 
 #creates a new object
@@ -535,6 +653,31 @@ sub getIndexOfElemExactMatch($$){
     return $index[0];
 }
 
+
+#input: 
+#$serv, $workspace, ref to hash
+#check whether hash data is a ref to a HASH (i.e. $params)
+#then creates ws objects for all these
+sub createObjectsForMissingRefs($$$){
+    my ($serv, $workspace) = ($_[0], $_[1]);
+    my $h =  $_[2];
+
+    my @params = ();
+    my @keys = ();
+
+    foreach (keys %{$h}){
+	if(  ref( $h->{$_} ) eq "HASH" ){ #i.e. obj reference is not yet created
+	    push @params, $h->{$_};
+	    push @names, $_;
+	}
+    }
+    my @refs = createObjects($serv, $workspace, @params);
+    die "Wrong number of refs for input params\n" if scalar(@params) != scalar(@refs);
+
+    for(my $i; $i<=$#params; ++$i){
+	$h->{ $names[$i] } = $refs[ $i ];
+    }
+}
 
 
  
