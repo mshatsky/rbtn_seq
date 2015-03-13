@@ -666,6 +666,8 @@ sub createObjectsForMissingRefs($$$){
 	if(  ref( $h->{$_} ) eq "HASH" ){ #i.e. obj reference is not yet created
 	    push @params, $h->{$_};
 	    push @nms, $_;
+
+	    print "Name: ".$h->{$_}->{name}." : Type : ". $h->{$_}->{type}." :\n";
 	}
     }
 
