@@ -386,6 +386,15 @@ sub formKBname(@){
     #subst ; with '_'
     $out =~ s/\;/_/g;
 
+    #subst ? with '_'
+    $out =~ s/\?/_/g;
+
+    #subst non-ascii with '_'
+    $out =~ s/[^[:ascii:]]/_/g;
+
+    #collapse multiple '_' into one
+    $out =~ s/_+/_/g;
+
     return $out;
 }
 
