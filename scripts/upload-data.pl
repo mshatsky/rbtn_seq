@@ -48,7 +48,6 @@ my $output = $serv->get_object({
 			       });
 
 print "Genome: ",$output->{data}->{scientific_name}, "\n";
-print "Ref: ", $output->_reference(), "\n";
 foreach my $f (@{$output->{data}->{features}}){
     my @aliases = @{$f->{aliases}};
     foreach(@aliases){
