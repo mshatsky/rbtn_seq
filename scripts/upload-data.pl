@@ -285,7 +285,7 @@ my $params = {
 };
 
 $params->{data}->{genome} = $genome->{metadata}->[6]."/".$genome->{metadata}->[0]."/".$genome->{metadata}->[4];
-$params->{data}->{experiments} = [ (( $Brseq2objref{ (keys %Brseq2objref)[0] }, $elem )   )]; 
+$params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, $elem )]   )]; 
 
 my %BrseqRes2objref = ();
 $BrseqRes2objref{ $name } = $params;
