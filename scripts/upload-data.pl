@@ -668,6 +668,9 @@ sub createObjectsForMissingRefs($$$){
 	    push @nms, $_;
 	}
     }
+
+    return if scalar(@params) <= 0;
+
     print "Saving ".scalar(@params)." objects in ws\n";
     my @refs = createObjects($serv, $workspace, @params);
     die "Wrong number of refs for input params\n" if scalar(@params) != scalar(@refs);
