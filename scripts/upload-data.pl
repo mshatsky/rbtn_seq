@@ -5,14 +5,16 @@ use warnings;
 use Getopt::Long;
 
 my $usage = 
-"file_with_meta_data file_with_logratios <-w workspace> <-n object_name>
+"file_with_meta_data file_with_logratios <-w workspace> <-n object_name> <-g genome_name>
 ";
 
 my $workspace = "";
 my $object_name = "new";
+my $genome_name = "ps_rch2_v2";
 
 (GetOptions('w=s' => \$workspace, 
-	    'n=s' => \$object_name) and scalar(@ARGV) >= 2)    || die $usage;
+	    'n=s' => \$object_name,
+            'g=s' => \$genome_name) and scalar(@ARGV) >= 2)    || die $usage;
 
 my ($FNM_META, $FNM_LOGRT) = @ARGV;
 
@@ -31,6 +33,32 @@ sub createObjectsForMissingRefs($$$);
 
 sub getIndexOfElemExactMatch($$);
 sub formKBname(@);
+
+
+
+#####################################################
+#get genome to access genes (Features)
+##################################################### 
+my $output = $serv->get_object({
+    id => $genome_name, 
+    type => "KBaseGenome",
+    workspace => $workspace
+    #instance => $jobdata->{TranscriptSet_inst},
+    #auth => $job->{auth}
+			       });
+
+print "Genome: ",$output->{data}->{scientific_name}, "\n";
+print "Ref: ", $output->_reference(), "\n";
+foreach my $f (@{$output->{data}->{features}}){
+    my @aliases = @{$f->{aliases}};
+    foreach(@aliases){
+        print "alias: $_\n";
+    }
+exit(0);
+}
+
+exit(0);
+
 
 #####################################################
 #get existing Media objects in WS to save creating 
@@ -220,6 +248,9 @@ foreach (@meta){
 }
 
 createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
+
+
+
 
 
 exit(0);
