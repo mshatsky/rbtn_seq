@@ -523,7 +523,7 @@ sub createObjects($$@){
 	my $saveObjectsParams = {
 		"workspace" => $workspace,
                 "objects" => [ ]  #add objects next
-	}
+	};
 	
 	foreach my $p (@params){
 	    push @{$saveObjectsParams->{objects}},
