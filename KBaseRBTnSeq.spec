@@ -245,7 +245,7 @@ typedef string barseq_experiment_ref;
   count_end - at the end of experiment
   norm_log_ratio - normalized log ratio between count_end and count_begin
 */
-typedef tuple<feature_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
+typedef tuple<feature_ref f_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
 
 /*
   BarSeqExperimentResults stores the log ratios calculated from
