@@ -272,9 +272,9 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 
 my $elem = [ 
     ( $genome->{metadata}->[6]."/".$genome->{metadata}->[0]."/".$genome->{metadata}->[4]."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
-      undef,
-      undef,
-      undef,
+      -1,
+      -1,
+      -1,
       -2
     )];
 
