@@ -51,7 +51,7 @@ if ( scalar(@$output)>0 ) {
     }
 }
 print "Ref: $genome_ref\n";
-exit(0);
+
 #get genome object
 my $genome = $serv->get_object({
     id => $genome_name, 
