@@ -513,61 +513,61 @@ sub createObjects($$@){
 	my $ws_ver = '';
 	eval { $ws_ver = $serv->ver(); };
 	if($@) {
-    		print "Object could not be saved! Error connecting to the WS server.\n";
-    		print STDERR $@->{message}."\n";
-    		if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
-    		print STDERR "\n";
-    		exit 1;
+	    print "Object could not be saved! Error connecting to the WS server.\n";
+	    print STDERR $@->{message}."\n";
+	    if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+	    print STDERR "\n";
+	    exit 1;
 	}
-
+	
 	my $saveObjectsParams = {
-		"workspace" => $workspace,
-                "objects" => [ ]  #add objects next
+	    "workspace" => $workspace,
+	    "objects" => [ ]  #add objects next
 	};
 	
 	foreach my $p (@params){
 	    push @{$saveObjectsParams->{objects}},
-                           {
-	                        "data"  => $p->{data},
-                                "name"  => $p->{name},
-                                "type"  => $p->{type},
-                                "meta"  => $p->{metadata},
-                                "provenance" => 
-				    [ {
-					"service"=>"Workspace",
-					"service_ver"=>$ws_ver,
-					"script"=>"upload-data.pl",
-					"script_command_line"=> "@ARGV"
-				      } ]           
-			   };
+	    {
+		"data"  => $p->{data},
+		"name"  => $p->{name},
+		"type"  => $p->{type},
+		"meta"  => $p->{metadata},
+		"provenance" => 
+		    [ {
+			"service"=>"Workspace",
+			"service_ver"=>$ws_ver,
+			"script"=>"upload-data.pl",
+			"script_command_line"=> "@ARGV"
+		      } ]           
+	    };
 	}
-
+	
 	my $output;
 	eval { $output = $serv->save_objects( $saveObjectsParams ); };
 	if($@) {
-    		print "Object could not be saved!\n";
-    		print STDERR $@->{message}."\n";
-    		if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
-    		print STDERR "\n";
-    		exit 1;
+	    print "Object could not be saved!\n";
+	    print STDERR $@->{message}."\n";
+	    if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
+	    print STDERR "\n";
+	    exit 1;
 	}
 
 	my @refs = ();
 	#Report the results
 	print "Object saved.  Details:\n";
 	if (scalar(@$output)>0) {
-        	foreach my $object_info (@$output) {
-			#return reference to the created object
-		    push @refs, $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
-		        #return $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
-			#return 
-                	#printObjectInfo($object_info);
-			#print $object_info,"\n";
-        	}
+	    foreach my $object_info (@$output) {
+		#return reference to the created object
+		push @refs, $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
+		#return $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
+		#return 
+		#printObjectInfo($object_info);
+		#print $object_info,"\n";
+	    }
 	} else {
-        	print STDERR "No details returned: ws save_objects\n";
+	    print STDERR "No details returned: ws save_objects\n";
 	}
-
+	
 	return @refs;
 }
 
@@ -660,7 +660,7 @@ sub createObjectsForMissingRefs($$$){
     my $h =  $_[2];
 
     my @params = ();
-    my @keys = ();
+    my @names = ();
 
     foreach (keys %{$h}){
 	if(  ref( $h->{$_} ) eq "HASH" ){ #i.e. obj reference is not yet created
@@ -670,7 +670,7 @@ sub createObjectsForMissingRefs($$$){
     }
     my @refs = createObjects($serv, $workspace, @params);
     die "Wrong number of refs for input params\n" if scalar(@params) != scalar(@refs);
-
+    
     for(my $i; $i<=$#params; ++$i){
 	$h->{ $names[$i] } = $refs[ $i ];
     }
