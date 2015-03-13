@@ -660,19 +660,19 @@ sub createObjectsForMissingRefs($$$){
     my $h =  $_[2];
 
     my @params = ();
-    my @names = ();
-
-    foreach (keys %{$h}){
+    my @nms = ();
+    
+    foreach ( keys %{$h} ){
 	if(  ref( $h->{$_} ) eq "HASH" ){ #i.e. obj reference is not yet created
 	    push @params, $h->{$_};
-	    push @names, $_;
+	    push @nms, $_;
 	}
     }
     my @refs = createObjects($serv, $workspace, @params);
     die "Wrong number of refs for input params\n" if scalar(@params) != scalar(@refs);
     
     for(my $i; $i<=$#params; ++$i){
-	$h->{ $names[$i] } = $refs[ $i ];
+	$h->{ $nms[$i] } = $refs[ $i ];
     }
 }
 
