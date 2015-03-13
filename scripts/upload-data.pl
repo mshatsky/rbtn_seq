@@ -39,7 +39,7 @@ sub formKBname(@);
 #####################################################
 #get genome to access genes (Features)
 ##################################################### 
-my $output = $serv->get_object({
+my $genome = $serv->get_object({
     id => $genome_name, 
     type => "KBaseGenome",
     workspace => $workspace
@@ -47,18 +47,20 @@ my $output = $serv->get_object({
     #auth => $job->{auth}
 			       });
 
-print "Genome: ",$output->{data}->{scientific_name}, "\n";
-foreach my $f (@{$output->{data}->{features}}){
-    print "F ".$f->{id}." type : ".$f->{type}."\n"; 
-    my @aliases = @{$f->{aliases}};
-    foreach(@aliases){
-        print "alias: $_\n";
+my %Aliases2FeatID = ();
+print "Genome: ",$genome->{data}->{scientific_name}, "\n";
+foreach my $f (@{$genome->{data}->{features}}){
+    
+    if($f->{type} eq "CDS"){
+	
+	#print "F ".$f->{id}." type : ".$f->{type}."\n"; 
+	my @aliases = @{$f->{aliases}};
+	foreach(@aliases){
+	    #print "alias: $_\n";
+	    $Aliases2FeatID{ $_ } = $f->{id};
+	}
     }
-exit(0);
 }
-
-exit(0);
-
 
 #####################################################
 #get existing Media objects in WS to save creating 
@@ -251,6 +253,42 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 
 
 
+
+####################################################
+#create BarSeqExperimentResults
+#
+#typedef tuple<feature_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
+#
+#/*
+#  BarSeqExperimentResults stores the log ratios calculated from
+#  a BarSeqExperiment.  There is one log ratio per strain per
+#  GrowthParameters.
+#*/
+#typedef structure {
+#    barseq_experiment_ref experiment;
+#    list<bar_seq_result> results;
+#} BarSeqExperimentResults;
+##################################################### 
+
+my $elem = [ 
+    ( $genome->{metadata}->[6]."/".$genome->{metadata}->[0]."/".$genome->{metadata}->[4]."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+      undef,
+      undef,
+      undef,
+      -2
+    )];
+
+my $name = "test1";
+my $params = {
+    "name" => $name,
+    "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
+};
+
+$params->{data}->{experiment} = $Brseq2objref{ (keys %Brseq2objref)[0] };
+$params->{data}->{results} = [ ($elem) ];
+
+my %BrseqRes2objref{ $name } = $params;
+createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
 exit(0);
