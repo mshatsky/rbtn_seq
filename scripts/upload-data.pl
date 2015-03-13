@@ -38,7 +38,21 @@ sub formKBname(@);
 
 #####################################################
 #get genome to access genes (Features)
-##################################################### 
+#####################################################
+my $genome_ref = "";
+my $output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseGenome"} );
+
+if ( scalar(@$output)>0 ) {
+    foreach my $object_info (@$output) {
+	#---
+	print  "Existing objects in ws: ".$object_info->[1]."\n";
+	$genome_ref = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]
+	    if ($object_info->[1] eq  $genome_name);
+    }
+}
+print "Ref: $genome_ref\n";
+exit(0);
+#get genome object
 my $genome = $serv->get_object({
     id => $genome_name, 
     type => "KBaseGenome",
