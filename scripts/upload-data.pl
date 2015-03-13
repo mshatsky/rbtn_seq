@@ -49,6 +49,7 @@ my $output = $serv->get_object({
 
 print "Genome: ",$output->{data}->{scientific_name}, "\n";
 foreach my $f (@{$output->{data}->{features}}){
+    print "F ".$f->{id}." type : ".$f->{type}."\n"; 
     my @aliases = @{$f->{aliases}};
     foreach(@aliases){
         print "alias: $_\n";
