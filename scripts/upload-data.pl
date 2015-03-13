@@ -289,7 +289,7 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 ##################################################### 
 
 my $elem = [ 
-    ( $genome->{metadata}->[6]."/".$genome->{metadata}->[0]."/".$genome->{metadata}->[4]."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+    ( $genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
       -1,
       -1,
       -1,
@@ -310,6 +310,18 @@ my %BrseqRes2objref = ();
 $BrseqRes2objref{ $name } = $params;
 createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
+
+
+
+my $obj = $serv->get_object_by_ref({
+    reference => $genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" }, 
+    asHash => 1
+    #instance => $jobdata->{TranscriptSet_inst},
+    #auth => $job->{auth}
+			       });
+foreach(@{$obj->{metadata}}){
+    print "$_\n";
+}
 
 exit(0);
 
