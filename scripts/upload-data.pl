@@ -46,6 +46,10 @@ my $genome = $serv->get_object({
     #instance => $jobdata->{TranscriptSet_inst},
     #auth => $job->{auth}
 			       });
+foreach(@{$genome->{metadata}}){
+    print "$_\n";
+}
+exit(0);
 
 my %Aliases2FeatID = ();
 print "Genome: ",$genome->{data}->{scientific_name}, "\n";
