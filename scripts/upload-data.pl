@@ -27,7 +27,7 @@ sub createConditionObject($$$$);
 sub createMediaObject($);
 sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$);
 sub createBarSeqExperimentObject($$$$$$$);
-sub createObjectsForMissingRefs($$$){
+sub createObjectsForMissingRefs($$$);
 
 sub getIndexOfElemExactMatch($$);
 sub formKBname(@);
@@ -443,38 +443,38 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$){
     foreach(@_){
 	print "param:$_:\n";
     }
-	my $params = {
-		"name" => $_[0],
-		"type" => "KBaseRBTnSeq.GrowthParameters",
-	};
-	$params->{data}->{description} = $_[1];
-	$params->{data}->{gDNA_plate}  = $_[2];
-	$params->{data}->{gDNA_well} = $_[3];
-	$params->{data}->{index} = $_[4];
-	$params->{data}->{media} = $_[5];
-	$params->{data}->{growth_method} = $_[6];
-	$params->{data}->{group} = $_[7];
-	$params->{data}->{temperature} = $_[8]+0 if $_[8] !~ 'NA' and $_[8]>0;
-	$params->{data}->{pH} = $_[9]+0 if $_[9] !~ 'NA' and $_[9]>0;
-	if($_[10] =~ /liquid/i){
-	    $params->{data}->{isLiquid} = 1;
-	}elsif($_[10] =~ /solid/i){
-	    $params->{data}->{isLiquid} = 0;
-	}
-	if($_[11] =~ /aerobic/i and $_[11] !~ /anaerobic/i){
-	    $params->{data}->{isAerobic} = 1;
-	}elsif($_[11] =~ /anaerobic/i){ 
-	    $params->{data}->{isAerobic} = 0;
-	}
-	$params->{data}->{shaking} = $_[12];
-	$params->{data}->{growth_plate_id} = $_[13] if length($_[13])>0;
-	$params->{data}->{growth_plate_wells} = $_[14] if length($_[14])>0;;
-	$params->{data}->{startOD} = $_[15]+0 if $_[15] !~ 'NA' and $_[15]>0;
-	$params->{data}->{endOD} = $_[16]+0   if $_[16] !~ 'NA' and $_[16]>0;
-	$params->{data}->{total_generations} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
-	
-	print "Ref to media obj:".$params->{data}->{media}.":\n";
-        return $params;
+    my $params = {
+	"name" => $_[0],
+	"type" => "KBaseRBTnSeq.GrowthParameters",
+    };
+    $params->{data}->{description} = $_[1];
+    $params->{data}->{gDNA_plate}  = $_[2];
+    $params->{data}->{gDNA_well} = $_[3];
+    $params->{data}->{index} = $_[4];
+    $params->{data}->{media} = $_[5];
+    $params->{data}->{growth_method} = $_[6];
+    $params->{data}->{group} = $_[7];
+    $params->{data}->{temperature} = $_[8]+0 if $_[8] !~ 'NA' and $_[8]>0;
+    $params->{data}->{pH} = $_[9]+0 if $_[9] !~ 'NA' and $_[9]>0;
+    if($_[10] =~ /liquid/i){
+	$params->{data}->{isLiquid} = 1;
+    }elsif($_[10] =~ /solid/i){
+	$params->{data}->{isLiquid} = 0;
+    }
+    if($_[11] =~ /aerobic/i and $_[11] !~ /anaerobic/i){
+	$params->{data}->{isAerobic} = 1;
+    }elsif($_[11] =~ /anaerobic/i){ 
+	$params->{data}->{isAerobic} = 0;
+    }
+    $params->{data}->{shaking} = $_[12];
+    $params->{data}->{growth_plate_id} = $_[13] if length($_[13])>0;
+    $params->{data}->{growth_plate_wells} = $_[14] if length($_[14])>0;;
+    $params->{data}->{startOD} = $_[15]+0 if $_[15] !~ 'NA' and $_[15]>0;
+    $params->{data}->{endOD} = $_[16]+0   if $_[16] !~ 'NA' and $_[16]>0;
+    $params->{data}->{total_generations} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
+    
+    print "Ref to media obj:".$params->{data}->{media}.":\n";
+    return $params;
 }
 
 
@@ -675,6 +675,3 @@ sub createObjectsForMissingRefs($$$){
 	$h->{ $nms[$i] } = $refs[ $i ];
     }
 }
-
-
- 
