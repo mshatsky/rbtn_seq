@@ -248,13 +248,21 @@ typedef string barseq_experiment_ref;
 typedef tuple<feature_ref f_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
 
 /*
+ A single (i.e. one condition) BarSeq experiment
+ barseq_experiment_ref - describes the experiment
+ bar_seq_result - list of counts. Can be per gene or per strain.
+*/
+typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_exp;
+
+/*
   BarSeqExperimentResults stores the log ratios calculated from
-  a BarSeqExperiment.  There is one log ratio per strain per
+  a BarSeqExperiment.  There is one log ratio per strain or per gene per
   GrowthParameters.
+  May contain a number of BarSeqExperiment done on same species.
 */
 typedef structure {
-    barseq_experiment_ref experiment;
-    list<bar_seq_result> results;
+    genome_ref genome;
+    list<bar_seq_exp> experiments;
 } BarSeqExperimentResults;
 
 /*
