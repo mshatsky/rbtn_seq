@@ -55,7 +55,7 @@ exit(0);
 #get genome object
 my $genome = $serv->get_object({
     id => $genome_name, 
-    type => "KBaseGenome",
+    type => "KBaseGenomes.Genome",
     workspace => $workspace
     #instance => $jobdata->{TranscriptSet_inst},
     #auth => $job->{auth}
