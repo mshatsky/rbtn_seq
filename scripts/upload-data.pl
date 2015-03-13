@@ -359,7 +359,7 @@ exit(0);
 
 #join array of strings into one string and subs 
 #illegal chars with something else
-sub formKBname{
+sub formKBname(@){
     my $out = join('|', @_);
 
     #subs white spaces with '_'
@@ -520,15 +520,6 @@ sub createObjects($$@){
     		exit 1;
 	}
 
-	# set provenance info
-	my $PA = {
-                "service"=>"Workspace",
-                "service_ver"=>$ws_ver,
-                "script"=>"upload-data.pl",
-                "script_command_line"=> "@ARGV"
-          };
-	$params->{provenance} = [ $PA ];
-
 	my $saveObjectsParams = {
 		"workspace" => $workspace,
                 "objects" => [ ]  #add objects next
@@ -541,8 +532,14 @@ sub createObjects($$@){
                                 "name"  => $p->{name},
                                 "type"  => $p->{type},
                                 "meta"  => $p->{metadata},
-                                "provenance" => $p->{provenance}
-                           };
+                                "provenance" => 
+				    [ {
+					"service"=>"Workspace",
+					"service_ver"=>$ws_ver,
+					"script"=>"upload-data.pl",
+					"script_command_line"=> "@ARGV"
+				      } ]           
+			   };
 	}
 
 	my $output;
