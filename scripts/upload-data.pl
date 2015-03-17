@@ -64,6 +64,18 @@ my $genome = $serv->get_object({
 #    print "$_\n";
 #}
 
+my $feat = $serv->get_object({
+    ref => $genome_ref."/features/id/Psest_4147", 
+    type => "KBaseGenomes.Genome.Feature",
+    workspace => $workspace
+    #instance => $jobdata->{TranscriptSet_inst},
+    #auth => $job->{auth}
+			       });
+
+foreach(@{$feat->{metadata}}){
+    print "$_\n";
+}
+exit(0);
 
 my %Aliases2FeatID = ();
 print "Genome: ",$genome->{data}->{scientific_name}, "\n";
@@ -290,7 +302,7 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 print "Test: ",$Aliases2FeatID{ "Psest_4147" }, "\n";
 
 my $elem = [ 
-    ( $genome_ref."/feat_ures/id/".$Aliases2FeatID{ "Psest_4147" } ,
+    ( $genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
       -1,
       -1,
       -1,
@@ -327,8 +339,8 @@ my $objs = $serv->get_object_subset(
 );
 
 foreach my $obj (@{$objs}){			      
-    foreach ( @{$obj->{info}} ){
-	print "$_\n";
+    foreach ( @{$obj->{refs}} ){
+	print "Refs: $_\n";
     }
 }
 
