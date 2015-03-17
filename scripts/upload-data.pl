@@ -287,9 +287,10 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 #    list<bar_seq_result> results;
 #} BarSeqExperimentResults;
 ##################################################### 
+print "Test: ",$Aliases2FeatID{ "Psest_4147" }, "\n";
 
 my $elem = [ 
-    ( $genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+    ( $genome_ref."/feat_ures/id/".$Aliases2FeatID{ "Psest_4147" } ,
       -1,
       -1,
       -1,
@@ -313,14 +314,15 @@ createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
 
-my $obj = $serv->get_object_by_ref({
-    reference => $genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" }, 
-    asHash => 1
-    #instance => $jobdata->{TranscriptSet_inst},
-    #auth => $job->{auth}
-			       });
-foreach(@{$obj->{metadata}}){
-    print "$_\n";
+my $objs = $serv->get_object_subset({
+    ref => $genome_ref,
+    included => [ ( "/features/7", "/scientific_name") ]
+				    });
+
+foreach my $obj (@{$objs}){			      
+    foreach ( @{$obj->{info}} ){
+	print "$_\n";
+    }
 }
 
 exit(0);
