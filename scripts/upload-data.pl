@@ -70,10 +70,10 @@ my $genome = $serv->get_object({
 
 my %Aliases2FeatID = ();
 my %FeatID2index = ();
-my $FeatureIndex2id = {};
+my $FeatIndex2id = {};
 
 print "Genome: ",$genome->{data}->{scientific_name}, "\n";
-for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++i){
+for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++$i){
 #foreach my $f (@{$genome->{data}->{features}}){
     my $f = $genome->{data}->{features}->[$i];
 
@@ -85,7 +85,7 @@ for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++i){
 	    #print "alias: $_\n";
 	    $Aliases2FeatID{ $_ } = $f->{id};
 	}
-	$FeatureIndex2id{ $i } = $f->{id};
+	$FeatIndex2id->{ $i } = $f->{id};
 	$FeatID2index{ $f->{id} } = $i;
     }
 }
@@ -316,7 +316,7 @@ my $params = {
 
 $params->{data}->{genome} = $genome_ref;
 $params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, $elem )]   )]; 
-$params->{data}->{feature_index_to_id} = $Featureindex2id; 
+$params->{data}->{feature_index_to_id} = $FeatIndex2id; 
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
 my %BrseqRes2objref = ();
