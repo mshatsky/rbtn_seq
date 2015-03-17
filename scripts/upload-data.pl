@@ -297,7 +297,7 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 #    list<bar_seq_result> results;
 #} BarSeqExperimentResults;
 ##################################################### 
-print "Test: ",$Aliases2FeatID{ "Psest_4147" }, " : ", $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } , "\n";
+print "Test: ",$Aliases2FeatID{ "Psest_4147" }, " : ", $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } } , "\n";
 
 my $elem = [ 
     ( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
