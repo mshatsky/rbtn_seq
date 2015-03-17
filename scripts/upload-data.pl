@@ -69,7 +69,7 @@ my $genome = $serv->get_object({
 
 my $objs = $serv->get_object_subset(
     [ { ref => $genome_ref,
-	included => ["/features/7"]
+	included => ["/features/7","/features/0"]
       },
       { 
 	  
@@ -79,9 +79,10 @@ my $objs = $serv->get_object_subset(
     ] 
 );
 
-foreach my $obj (@{$objs}){			      
-    foreach ( @{$obj->{refs}} ){
-	print "Refs: $_\n";
+foreach my $obj (@{$objs}){
+    print "Object: ",$obj->{info}->[0],"\n";
+    foreach ( @{$obj->{data}->{features}}){
+	print "Feat: ",$_->{id},"\n";
     }
 }
 
