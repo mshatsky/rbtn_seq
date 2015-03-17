@@ -67,43 +67,16 @@ my $genome = $serv->get_object({
 #}
 
 
-my $objs = $serv->get_object_subset(
-    [ { ref => $genome_ref,
-	included => ["/features/7","/features/0"]
-      },
-      { 
-	  
-	  ref => $genome_ref,
-	  included => ["/scientific_name"]
-      }
-    ] 
-);
-
-foreach my $obj (@{$objs}){
-    print "Object: ",$obj->{info}->[0],"\n";
-    foreach ( @{$obj->{data}->{features}}){
-	print "Feat: ",$_->{id},"\n";
-    }
-}
-
-
-my $feat = $serv->get_object({
-    id => $genome_ref."/features/id/Psest_4147", 
-    type => "KBaseGenomes.Genome.Feature",
-    workspace => $workspace
-    #instance => $jobdata->{TranscriptSet_inst},
-    #auth => $job->{auth}
-			       });
-
-foreach(@{$feat->{metadata}}){
-    print "$_\n";
-}
-exit(0);
 
 my %Aliases2FeatID = ();
+my %FeatID2index = ();
+my $FeatureIndex2id = {};
+
 print "Genome: ",$genome->{data}->{scientific_name}, "\n";
-foreach my $f (@{$genome->{data}->{features}}){
-    
+for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++i){
+#foreach my $f (@{$genome->{data}->{features}}){
+    my $f = $genome->{data}->{features}->[$i];
+
     if($f->{type} eq "CDS"){
 	
 	#print "F ".$f->{id}." type : ".$f->{type}."\n"; 
@@ -112,6 +85,8 @@ foreach my $f (@{$genome->{data}->{features}}){
 	    #print "alias: $_\n";
 	    $Aliases2FeatID{ $_ } = $f->{id};
 	}
+	$FeatureIndex2id{ $i } = $f->{id};
+	$FeatID2index{ $f->{id} } = $i;
     }
 }
 
@@ -325,7 +300,8 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 print "Test: ",$Aliases2FeatID{ "Psest_4147" }, "\n";
 
 my $elem = [ 
-    ( $genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+    ( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+      $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } },
       -1,
       -1,
       -1,
@@ -340,6 +316,7 @@ my $params = {
 
 $params->{data}->{genome} = $genome_ref;
 $params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, $elem )]   )]; 
+$params->{data}->{feature_index_to_id} = $Featureindex2id; 
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
 my %BrseqRes2objref = ();

@@ -239,13 +239,13 @@ typedef string barseq_experiment_ref;
   Number of times a barcode (i.e. a strain) was detected by sequencing a pool at beginning (refernce state)
   and at the end of GrowthParameters, and a calculated log ratio of strain abundance relative to a starting
   condition.
-  feature_ref - optional, if strain_index is NA and log ratio corresponds to a gene, not a strain
+  feature_index - Genome.features[index] optional, if strain_index is NA and log ratio corresponds to a gene, not a strain
   strain_index - index of a strain in Pool.strains list
   count_begin - number of instances of the strain identified from sequencing at the beginning of experiment
   count_end - at the end of experiment
   norm_log_ratio - normalized log ratio between count_end and count_begin
 */
-typedef tuple<feature_ref f_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
+typedef tuple<int feature_index,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
 
 /*
  A single (i.e. one condition) BarSeq experiment
@@ -262,6 +262,7 @@ typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_
 */
 typedef structure {
     genome_ref genome;
+    mapping<int feature_index, string feature_id> feature_index_to_id;
     list<bar_seq_exp> experiments;
 } BarSeqExperimentResults;
 
