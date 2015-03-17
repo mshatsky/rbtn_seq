@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
+use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace printObjectInfo);
 
 my $usage = 
 "file_with_meta_data file_with_logratios <-w workspace> <-n object_name> <-g genome_name>
@@ -52,6 +53,7 @@ if ( scalar(@$output)>0 ) {
 }
 print "Ref: $genome_ref\n";
 
+
 #get genome object
 my $genome = $serv->get_object({
     id => $genome_name, 
@@ -63,6 +65,26 @@ my $genome = $serv->get_object({
 #foreach(@{$genome->{metadata}}){
 #    print "$_\n";
 #}
+
+
+my $objs = $serv->get_object_subset(
+    [ { ref => $genome_ref,
+	included => ["/features/7"]
+      },
+      { 
+	  
+	  ref => $genome_ref,
+	  included => ["/scientific_name"]
+      }
+    ] 
+);
+
+foreach my $obj (@{$objs}){			      
+    foreach ( @{$obj->{refs}} ){
+	print "Refs: $_\n";
+    }
+}
+
 
 my $feat = $serv->get_object({
     id => $genome_ref."/features/id/Psest_4147", 
@@ -326,23 +348,6 @@ createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
 
-my $objs = $serv->get_object_subset(
-    [ { ref => $genome_ref,
-	included => ["/features/7"]
-      },
-      { 
-	  
-	  ref => $genome_ref,
-	  included => ["/scientific_name"]
-      }
-    ] 
-);
-
-foreach my $obj (@{$objs}){			      
-    foreach ( @{$obj->{refs}} ){
-	print "Refs: $_\n";
-    }
-}
 
 exit(0);
 
@@ -417,7 +422,6 @@ print "T: ", $params->{data}->{experiment}, "\n";
 #print "T: ", $params->{data}->{results}->[9]->[0], " ", $params->{data}->{results}->[9]->[3], "\n";
 
 ###################################################
-use Bio::KBase::workspace::ScriptHelpers qw(get_ws_client workspace printObjectInfo);
 
 #lookup version number of WS Service that will be loading the data
 my $ws_ver = '';
