@@ -65,7 +65,7 @@ my $genome = $serv->get_object({
 #}
 
 my $feat = $serv->get_object({
-    ref => $genome_ref."/features/id/Psest_4147", 
+    id => $genome_ref."/features/id/Psest_4147", 
     type => "KBaseGenomes.Genome.Feature",
     workspace => $workspace
     #instance => $jobdata->{TranscriptSet_inst},
