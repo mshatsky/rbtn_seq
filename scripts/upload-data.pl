@@ -315,14 +315,14 @@ createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
 my $objs = $serv->get_object_subset(
-    [ ( { ref => $genome_ref,
-	  included => "/features/7" 
-	},
-	{ ref => $genome_ref,
-	  included => "/scientific_name"
-	}
-      ) ]
-    );
+    [ { ref => $genome_ref,
+	included => "/features/7" 
+      },
+      { ref => $genome_ref,
+	included => "/scientific_name"
+      }
+    ] 
+);
 
 foreach my $obj (@{$objs}){			      
     foreach ( @{$obj->{info}} ){
