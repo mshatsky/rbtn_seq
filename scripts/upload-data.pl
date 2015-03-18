@@ -82,7 +82,8 @@ for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++$i){
 	#print "F ".$f->{id}." type : ".$f->{type}."\n"; 
 	my @aliases = @{$f->{aliases}};
 	foreach(@aliases){
-	    #print "alias: $_\n";
+	    #
+	    print "alias: $_ -> ".$f->{id}."\n";
 	    $Aliases2FeatID{ $_ } = $f->{id};
 	}
 	$FeatIndex2id->{ $i } = $f->{id};
@@ -300,8 +301,8 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 
 #print "Test: ",$Aliases2FeatID{ "Psest_4147" }, " : ", $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } } , "\n";
 
-my $elem = [ 
-    ( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+my $elem = 
+    [( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
       int($FeatID2index{ $Aliases2FeatID{ "Psest_1061" } }),
       -1,
       -1,
@@ -316,7 +317,7 @@ my $params = {
 };
 
 $params->{data}->{genome} = $genome_ref;
-$params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, $elem )]   )]; 
+$params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, [ ($elem) ] )]   )]; 
 $params->{data}->{feature_index_to_id} = $FeatIndex2id; 
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
