@@ -297,11 +297,12 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 #    list<bar_seq_result> results;
 #} BarSeqExperimentResults;
 ##################################################### 
-print "Test: ",$Aliases2FeatID{ "Psest_4147" }, " : ", $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } } , "\n";
+
+#print "Test: ",$Aliases2FeatID{ "Psest_4147" }, " : ", $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } } , "\n";
 
 my $elem = [ 
     ( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
-      int($FeatID2index{ $Aliases2FeatID{ "Psest_4147" } }),
+      int($FeatID2index{ $Aliases2FeatID{ "Psest_1061" } }),
       -1,
       -1,
       -1,
@@ -324,10 +325,6 @@ $BrseqRes2objref{ $name } = $params;
 createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
-
-
-
-exit(0);
 
 
 #####################################################
@@ -354,11 +351,7 @@ for(my $i=4; $i<= $#headerData; ++$i){
 #}
 
 
-#typedef structure {
-#    barseq_experiment_ref experiment;
-#    list<bar_seq_result> results;
-#} BarSeqExperimentResults;
-my %brseqdata=(); #hash of many BarSeqExperimentResults
+my %brseqdata=(); #hash of barseq_experiment_ref -> ref to list< bar_seq_result >
 
 while(<FILE>){
     chomp;
@@ -369,18 +362,49 @@ while(<FILE>){
     my ($locusId, $sysName, $desc, $comb, @lratios) = @l;
 
     for(my $i=0; $i<= $#lratios; ++$i){
+	die "Error: $sysName not found in genome $genome_name\n"
+	    if !exists $Aliases2FeatID{ $sysName };
+	die "Error: alias ".$Aliases2FeatID{ $sysName }."for $sysName not found in genome $genome_name\n"
+	    if !exists $FeatID2index{ $Aliases2FeatID{ $sysName } };
+	
+	my $feat_index=int($FeatID2index{ $Aliases2FeatID{ $sysName } });
+	
 	#fill in data
-	#typedef tuple<int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
-	my @res = (0,0,0,0+$lratios[ $i ]);
-	push @{$brseqdata{ $headerData[ $i + 4 ] }->{ results }}, [ @res ];	
+	#typedef tuple<int feature_index,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
+	#typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_exp;
+
+	my @res = ($feat_index, 0,0,0,0+$lratios[ $i ]);
+	push @{$brseqdata{ $Brseq2objref{ $headerData[ $i + 4 ] }}}, [ @res ];	
     }
 }
 close FILE;
 
+#prepare BarSeqExperimentResults object;
+
+my $name = "test1";
+my $params = {
+    "name" => $name,
+    "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
+};
+
+$params->{data}->{genome} = $genome_ref;
+$params->{data}->{feature_index_to_id} = $FeatIndex2id; 
+
 #fill in experiment field
 foreach (keys %brseqdata){
-    $brseqdata{ $_ }->{ experiment } = "$_";
+    push @{ $params->{data}->{experiments} } = [( $_ , $brseqdata{ $_ } )];
 }
+
+print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
+my %BrseqRes2objref = ();
+$BrseqRes2objref{ $name } = $params;
+createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
+
+exit(0);
+
+
+
+
 
 
 

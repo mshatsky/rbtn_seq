@@ -252,7 +252,7 @@ typedef tuple<int feature_index,int strain_index,int count_begin,int count_end,f
  barseq_experiment_ref - describes the experiment
  bar_seq_result - list of counts. Can be per gene or per strain.
 */
-typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_exp;
+typedef tuple<barseq_experiment_ref experiment, list< bar_seq_result > results> bar_seq_exp;
 
 /*
   BarSeqExperimentResults stores the log ratios calculated from
