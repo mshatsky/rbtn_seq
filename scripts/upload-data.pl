@@ -91,7 +91,7 @@ for(my $i=0; $i< scalar(@{$genome->{data}->{features}}); ++$i){
 	$FeatID2index{ $f->{id} } = $i;
     }
 }
-exit(0);
+
 #####################################################
 #get existing Media objects in WS to save creating 
 #new versions for the same thing.
