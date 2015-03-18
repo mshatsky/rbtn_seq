@@ -354,6 +354,7 @@ for(my $i=4; $i<= $#headerData; ++$i){
 
 
 my %brseqdata=(); #hash of barseq_experiment_ref -> ref to list< bar_seq_result >
+my $gcounter = 0;
 
 while(<FILE>){
     chomp;
@@ -363,11 +364,14 @@ while(<FILE>){
     
     my ($locusId, $sysName, $desc, $comb, @lratios) = @l;
 
+    next if !exists $Aliases2FeatID{ $sysName }; #!!!!!
+    die "Error: $sysName not found in genome $genome_name\n"
+        if !exists $Aliases2FeatID{ $sysName };
+     die "Error: alias ".$Aliases2FeatID{ $sysName }."for $sysName not found in genome $genome_name\n"
+        if !exists $FeatID2index{ $Aliases2FeatID{ $sysName } };
+
+    ++$gcounter;
     for(my $i=0; $i<= $#lratios; ++$i){
-	die "Error: $sysName not found in genome $genome_name\n"
-	    if !exists $Aliases2FeatID{ $sysName };
-	die "Error: alias ".$Aliases2FeatID{ $sysName }."for $sysName not found in genome $genome_name\n"
-	    if !exists $FeatID2index{ $Aliases2FeatID{ $sysName } };
 	
 	my $feat_index=int($FeatID2index{ $Aliases2FeatID{ $sysName } });
 	
@@ -380,6 +384,7 @@ while(<FILE>){
     }
 }
 close FILE;
+print "Saving data for $gcounter genes\n";
 
 #prepare BarSeqExperimentResults object;
 
