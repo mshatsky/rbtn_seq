@@ -73,7 +73,8 @@ my %FeatID2index = ();
 my $FeatIndex2id = {};
 
 print "Genome: ",$genome->{data}->{scientific_name}, "\n";
-for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++$i){
+print "Number of features : ",scalar(@{$genome->{data}->{features}}), "\n";
+for(my $i=0; $i< scalar(@{$genome->{data}->{features}}); ++$i){
 #foreach my $f (@{$genome->{data}->{features}}){
     my $f = $genome->{data}->{features}->[$i];
 
@@ -90,7 +91,7 @@ for(my $i=0; $i< length(@{$genome->{data}->{features}}); ++$i){
 	$FeatID2index{ $f->{id} } = $i;
     }
 }
-
+exit(0);
 #####################################################
 #get existing Media objects in WS to save creating 
 #new versions for the same thing.
