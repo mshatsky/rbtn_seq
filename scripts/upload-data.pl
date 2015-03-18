@@ -580,9 +580,9 @@ sub createMediaObject($){
 #16    float endOD;
 #17    float total_generations;
 sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$){
-    foreach(@_){
-	print "param:$_:\n";
-    }
+    #foreach(@_){
+    #	print "param:$_:\n";
+    #}
     my $params = {
 	"name" => $_[0],
 	"type" => "KBaseRBTnSeq.GrowthParameters",
