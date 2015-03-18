@@ -396,10 +396,11 @@ my $params = {
 
 $params->{data}->{genome} = $genome_ref;
 $params->{data}->{feature_index_to_id} = $FeatIndex2id; 
+$params->{data}->{experiments}  = [];
 
 #fill in experiment field
 foreach (keys %brseqdata){
-    push @{ $params->{data}->{experiments} } = [( $_ , $brseqdata{ $_ } )];
+    push @{ $params->{data}->{experiments} }, [( $_ , $brseqdata{ $_ } )];
 }
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
