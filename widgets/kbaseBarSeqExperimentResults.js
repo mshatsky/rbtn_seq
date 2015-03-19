@@ -27,7 +27,7 @@
         genomeName: null,
         accessionToShortDescription: {},
         accessionToLongDescription: {},
-        annotatedGenesCount: 0,
+        annotatedGenes: {},
 	experimentsCount: 0,
 	experiments: [],
 	experimentToSickGenes: {},
@@ -116,7 +116,7 @@
                             $('<span />').append(self.genomeName).css('font-style', 'italic') ) )
                         .append( self.makeRow( 
                             'Genes analyzed', 
-                            self.annotatedGenesCount ) )
+                            self.annotatedGenes.length ) )
                         .append( self.makeRow( 
                             'Number of Experiments', 
                             self.experimentsCount) );
@@ -171,9 +171,8 @@
                         experimentsTableData.push(
                             {
                                 'experimentDescription': expID, 
-                                'sickGenes' : sickGenes.join(),
+                                'sickGenes' : geneRefs,
                                 'sickGenesLong' : sickGenes.join(),
-                                'geneRefs': geneRefs
                             }
                         );
                     };
@@ -212,7 +211,7 @@
 
             self.experiments = [];
 	    self.genesToLog = [];
-	    self.annotatedGenesCount = 0;
+	    self.annotatedGenes = {};
 
 	    self.experimentsCount = self.barSeqExperimentResultsData.experiments.length;
 
@@ -225,7 +224,7 @@
                     var geneID = experArray[i][0];
                     var logRatio = experArray[i][4];
 
-		    self.annotatedGenesCount++;
+		    self.annotatedGenes[ geneID ] = 1;
                    
 		    self.genesToLog.push( 
 			{
