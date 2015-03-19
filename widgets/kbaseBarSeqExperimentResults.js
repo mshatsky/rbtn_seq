@@ -116,7 +116,7 @@
                             $('<span />').append(self.genomeName).css('font-style', 'italic') ) )
                         .append( self.makeRow( 
                             'Genes analyzed', 
-                            self.annotatedGenes.length ) )
+                            Object.keys(self.annotatedGenes).length ) )
                         .append( self.makeRow( 
                             'Number of Experiments', 
                             self.experimentsCount) );
@@ -177,7 +177,7 @@
                         );
                     };
                     experimentsTableSettings.aaData = experimentsTableData;
-                    tableExperiments = tableExperiments.dataTable(domainTableSettings);
+                    tableExperiments = tableExperiments.dataTable(experimentsTableSettings);
 
                     ///////////////////////////////////// Experiments Tab Events ////////////////////////////////////////////          
                     function eventsExperimentsTab() {
