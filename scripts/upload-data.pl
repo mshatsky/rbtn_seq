@@ -381,6 +381,7 @@ while(<FILE>){
 	#typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_exp;
 
 	my @res = ($feat_index, 0,0,0,0+$lratios[ $i ]);
+	print "saving log ratio : $lratios[ $i ]\n";
 	push @{$brseqdata{ $headerData[ $i + 4 ] }}, [ @res ];	
     }
 }
