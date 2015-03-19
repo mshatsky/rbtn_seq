@@ -231,7 +231,7 @@
 			}
 		    );
 
-		    console.log(iExp + " " + self.barSeqExperimentResultsData.experiments[ iExp ][0]);
+		    //console.log(iExp + " " + self.barSeqExperimentResultsData.experiments[ iExp ][0]);
 		    if(logRatio < -2){
 			if(typeof self.experimentToSickGenes[
 			            self.barSeqExperimentResultsData.experiments[ iExp ][0]
