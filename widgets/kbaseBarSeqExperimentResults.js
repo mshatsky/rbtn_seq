@@ -172,7 +172,7 @@
                             {
                                 'experimentDescription': expID, 
                                 'sickGenes' : geneRefs,
-                                'sickGenesLong' : sickGenes.join(),
+                                'sickGenesLong' : sickGenes.join()
                             }
                         );
                     };
@@ -237,8 +237,8 @@
 		    //console.log(iExp + " " + self.barSeqExperimentResultsData.experiments[ iExp ][0]);
 		    if(logRatio < -2){
 			if(typeof self.experimentToSickGenes[
-			            self.barSeqExperimentResultsData.experiments[ iExp ][0]
-			          ] === 'undefined'){
+			        self.barSeqExperimentResultsData.experiments[ iExp ][0]
+			    ] === 'undefined'){
 			    self.experimentToSickGenes[
 				self.barSeqExperimentResultsData.experiments[ iExp ][0]
 			    ] = [];
@@ -256,11 +256,11 @@
 
         makeRow: function(name, value) {
             var $row = $("<tr/>")
-                       .append($("<th />").css('width','20%').append(name))
-                       .append($("<td />").append(value));
+                .append($("<th />").css('width','20%').append(name))
+                .append($("<td />").append(value));
             return $row;
         },
-
+	
         getData: function() {
             return {
                 type: 'BarSeqExperimentResults',
