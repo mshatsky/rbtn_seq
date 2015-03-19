@@ -146,7 +146,11 @@
 
                     var experimentsTableData = [];
                     for(var expID in self.experiments){
-                        var sickGenes = self.experimentToSickGenes[expID];
+                        var sickGenes = [];
+
+			if(typeof self.experimentToSickGenes[expID] !=== 'undefined'){
+			    sickGenes = self.experimentToSickGenes[expID];
+			}
 
 		
                         // Build concatenated list of gene references
