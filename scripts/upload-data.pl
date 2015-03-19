@@ -401,7 +401,7 @@ $params->{data}->{experiments}  = [];
 
 #fill in experiment field
 foreach (keys %brseqdata){
-    push @{ $params->{data}->{experiments} }, [( %{$_->{data} , $brseqdata{ $_ } )];
+    push @{ $params->{data}->{experiments} }, [( %{$_->{data}} , $brseqdata{ $_ } )];
 }
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
