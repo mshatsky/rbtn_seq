@@ -381,7 +381,7 @@ while(<FILE>){
 	#typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_exp;
 
 	my @res = ($feat_index, 0,0,0,0+$lratios[ $i ]);
-	push @{$brseqdata{ $Brseq2objref{ $headerData[ $i + 4 ] }}}, [ @res ];	
+	push @{$brseqdata{ $headerData[ $i + 4 ] }}, [ @res ];	
     }
 }
 close FILE;
@@ -400,9 +400,10 @@ $params->{data}->{feature_index_to_id} = $FeatIndex2id;
 $params->{data}->{experiments}  = [];
 
 #fill in experiment field
+print "Start filling in BarSeqResults object\n";
 foreach (keys %brseqdata){
-    print "test: ",$_->{data}->{name},"\n";
-    push @{ $params->{data}->{experiments} }, [( $_->{data} , $brseqdata{ $_ } )];
+    print "test: $_ : ", $Brseq2objref{ $_ }->{data}->{name},"\n";
+    push @{ $params->{data}->{experiments} }, [(  $Brseq2objref{ $_ }->{data} , $brseqdata{ $_ } )];
 }
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
