@@ -210,7 +210,7 @@
 	    self.genesToLog = [];
 	    self.annotatedGenesCount = 0;
 
-	    self.experimentsCount = length(self.barSeqExperimentsResultsData.experiments);
+	    self.experimentsCount = self.barSeqExperimentResultsData.experiments.length;
 
 	  
 	    for(var iExp = 0 ; iExp < self.barSeqExperimentResultsData.experiments.length; iExp++){
