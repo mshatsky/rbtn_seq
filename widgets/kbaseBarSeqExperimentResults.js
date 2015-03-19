@@ -230,25 +230,25 @@
 			{
 			    'gene': geneID,
 			    'logRatio': logRatio,
-			    'experiment': experArray[i][0]
+			    'experiment': experArray[i][0].name
 			}
 		    );
 
 		    //console.log(iExp + " " + self.barSeqExperimentResultsData.experiments[ iExp ][0]);
 		    if(logRatio < -2){
 			if(typeof self.experimentToSickGenes[
-			        self.barSeqExperimentResultsData.experiments[ iExp ][0]
+			        self.barSeqExperimentResultsData.experiments[ iExp ][0].name
 			    ] === 'undefined'){
 			    self.experimentToSickGenes[
-				self.barSeqExperimentResultsData.experiments[ iExp ][0]
+				self.barSeqExperimentResultsData.experiments[ iExp ][0].name
 			    ] = [];
 			}
 			self.experimentToSickGenes[
-			    self.barSeqExperimentResultsData.experiments[ iExp ][0]
+			    self.barSeqExperimentResultsData.experiments[ iExp ][0].name
 			].push( geneID );
 		    }
 		    self.experiments.push( 
-			self.barSeqExperimentResultsData.experiments[ iExp ][0] 
+			self.barSeqExperimentResultsData.experiments[ iExp ][0].name
 		    );
                 }
             }
