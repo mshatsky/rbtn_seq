@@ -279,7 +279,8 @@ foreach (@meta){
  #   }
 }
 
-createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
+#we don't create these objects in ws anymore, too many
+#createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 
 
 
@@ -302,29 +303,29 @@ createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
 
 #print "Test: ",$Aliases2FeatID{ "Psest_4147" }, " : ", $FeatID2index{ $Aliases2FeatID{ "Psest_4147" } } , "\n";
 
-my $elem = 
-    [( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
-      int($FeatID2index{ $Aliases2FeatID{ "Psest_1061" } }),
-      -1,
-      -1,
-      -1,
-      -2
-    )];
+# my $elem = 
+#     [( #$genome_ref."/features/id/".$Aliases2FeatID{ "Psest_4147" } ,
+#       int($FeatID2index{ $Aliases2FeatID{ "Psest_1061" } }),
+#       -1,
+#       -1,
+#       -1,
+#       -2
+#     )];
 
-my $name = "test1";
-my $params = {
-    "name" => $name,
-    "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
-};
+# my $name = "test1";
+# my $params = {
+#     "name" => $name,
+#     "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
+# };
 
-$params->{data}->{genome} = $genome_ref;
-$params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, [ ($elem) ] )]   )]; 
-$params->{data}->{feature_index_to_id} = $FeatIndex2id; 
+# $params->{data}->{genome} = $genome_ref;
+# $params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, [ ($elem) ] )]   )]; 
+# $params->{data}->{feature_index_to_id} = $FeatIndex2id; 
 
-print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
-my %BrseqRes2objref = ();
-$BrseqRes2objref{ $name } = $params;
-createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
+# print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
+# my %BrseqRes2objref = ();
+# $BrseqRes2objref{ $name } = $params;
+# createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 
 
@@ -400,7 +401,7 @@ $params->{data}->{experiments}  = [];
 
 #fill in experiment field
 foreach (keys %brseqdata){
-    push @{ $params->{data}->{experiments} }, [( $_ , $brseqdata{ $_ } )];
+    push @{ $params->{data}->{experiments} }, [( $_->{data} , $brseqdata{ $_ } )];
 }
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
@@ -639,6 +640,7 @@ sub createBarSeqExperimentObject($$$$$$$){
 		"name" => $_[0],
 		"type" => "KBaseRBTnSeq.BarSeqExperiment",
 	};
+	$params->{data}->{name} = $_[0];
 	$params->{data}->{person} = $_[1];
 	$params->{data}->{mutant_lib_name} =   $_[2];
 	$params->{data}->{start_date} = $_[3];

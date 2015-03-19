@@ -221,6 +221,7 @@ typedef string tnseq_library_ref;
 @optional person mutant_lib_name tnseq_library
 */
 typedef structure {
+    string name;
     string person;
     string mutant_lib_name;
     string start_date;
@@ -252,7 +253,7 @@ typedef tuple<int feature_index,int strain_index,int count_begin,int count_end,f
  barseq_experiment_ref - describes the experiment
  bar_seq_result - list of counts. Can be per gene or per strain.
 */
-typedef tuple<barseq_experiment_ref experiment, list< bar_seq_result > results> bar_seq_exp;
+typedef tuple<KBaseRBTnSeq.BarSeqExperiment experiment, list< bar_seq_result > results> bar_seq_exp;
 
 /*
   BarSeqExperimentResults stores the log ratios calculated from

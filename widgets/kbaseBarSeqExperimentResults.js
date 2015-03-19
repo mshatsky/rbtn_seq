@@ -171,8 +171,8 @@
                         experimentsTableData.push(
                             {
                                 'experimentDescription': expID, 
-                                'sickGenes' : geneRefs,
-                                'sickGenesLong' : sickGenes.join()
+                                'sickGenes' : sickGenes.length,
+                                'sickGenesLong' : sickGenes.length
                             }
                         );
                     };
