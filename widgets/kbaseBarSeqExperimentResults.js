@@ -148,7 +148,7 @@
                     for(var expID in self.experiments){
                         var sickGenes = [];
 
-			if(typeof self.experimentToSickGenes[expID] !=== 'undefined'){
+			if(typeof self.experimentToSickGenes[expID] !== 'undefined'){
 			    sickGenes = self.experimentToSickGenes[expID];
 			}
 
