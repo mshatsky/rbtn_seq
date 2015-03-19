@@ -145,7 +145,8 @@
                     };
 
                     var experimentsTableData = [];
-                    for(var expID in self.experiments){
+                    for(var i in self.experiments){
+			var expID = self.experiments[ i ];
                         var sickGenes = [];
 
 			if(typeof self.experimentToSickGenes[expID] !== 'undefined'){
@@ -247,10 +248,10 @@
 			    self.barSeqExperimentResultsData.experiments[ iExp ][0].name
 			].push( geneID );
 		    }
-		    self.experiments.push( 
-			self.barSeqExperimentResultsData.experiments[ iExp ][0].name
-		    );
-                }
+	        }
+		self.experiments.push( 
+		    self.barSeqExperimentResultsData.experiments[ iExp ][0].name
+		);
             }
         },
 
