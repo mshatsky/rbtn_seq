@@ -25,6 +25,7 @@
         genomeRef: null,
         genomeID: null,
         genomeName: null,
+	genomeFeatures: [],
         accessionToShortDescription: {},
         accessionToLongDescription: {},
         annotatedGenes: {},
@@ -94,10 +95,28 @@
                     }                    
                 );
 
+		//allow sorting for num with html (sType : "num-html")
+		//http://datatables.net/plug-ins/sorting/num-html
+		jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+		    "num-html-pre": function ( a ) {
+			var x = String(a).replace( /<[\s\S]*?>/g, "" );
+			return parseFloat( x );
+		    },
+		    
+		    "num-html-asc": function ( a, b ) {
+			return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+		    },
+		    
+		    "num-html-desc": function ( a, b ) {
+			return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+		    }
+		} );
+
                 // Launch jobs and vizualize data once they are done
                 $.when.apply($, [jobGetBarSeqExperimentResultsProperties]).done( function(){
                     self.loading(false);
                     self.prepareVizData();
+		    self.prepareGenomeFeatures(kbws, self.genomeRef); 
 
                     ///////////////////////////////////// Instantiating Tabs ////////////////////////////////////////////
                     container.empty();
@@ -131,10 +150,10 @@
                         "sPaginationType": "full_numbers",
                         "iDisplayLength": 10,
                         "aaData": [],
-                        "aaSorting": [[ 3, "asc" ], [0, "asc"]],
+                        "aaSorting": [[ 0, "desc" ]],
                         "aoColumns": [
                             { sTitle: "Description", mData: "experimentDescription"},
-			    { sTitle: "Sick Genes",  mData: "sickGenes"},
+			    { sTitle: "Sick Genes",  mData: "sickGenes", sType : "num-html"},
                             { sTitle: "Sick Genes Long", mData: "sickGenesLong", bVisible: false, bSearchable: true},
                         ],
                         "oLanguage": {
@@ -154,25 +173,17 @@
 			}
 
 		
-                        // Build concatenated list of gene references
-                        var geneRefs = "";
-                        for(var i = 0; i < sickGenes.length; i++){
-                            gene = sickGenes[i];
-                            if( i > 0 ) {
-                                geneRefs += '<br />';
-                            }                            
-                            geneRefs += '<a class="show-gene' + self.pref  + '"'
-                                + ' data-id="' + gene + '"'
-                                + ' data-contigID="' + gene  + '"'
-                                + ' data-geneIndex="' + gene  + '"'
-                                + '>' + gene + '</a>';
-                        }
+                        // Build reference to sick genes from a particular experiment
+                        var genesRefs = 
+                         '<a class="show-genes' + self.pref  + '"'
+                                + ' data-expID="' + expID  + '"'
+                                + '>' + sickGenes.length + '</a>';
  
                         // add table data row            
                         experimentsTableData.push(
                             {
                                 'experimentDescription': expID, 
-                                'sickGenes' : sickGenes.length,
+                                'sickGenes' : genesRefs,
                                 'sickGenesLong' : sickGenes.length
                             }
                         );
@@ -182,10 +193,71 @@
 
                     ///////////////////////////////////// Experiments Tab Events ////////////////////////////////////////////          
                     function eventsExperimentsTab() {
+			$('.show-genes'+self.pref).unbind('click');
+                        $('.show-genes'+self.pref).click(function() {
+
+                            var expID = $(this).attr('data-expID');
+
+                            if (tabPane.kbaseTabs('hasTab', expID)) {
+                                tabPane.kbaseTabs('showTab', expID);
+                                return;
+                            }
+
+                            ////////////////////////////// Build Genes table //////////////////////////////
+			    var sickGenes = [];
+
+			    if(typeof self.experimentToSickGenes[expID] !== 'undefined'){
+				sickGenes = self.experimentToSickGenes[expID];
+			    }
+
+
+
+                            var tabContent = $("<div/>");
+
+                            var tableGenes = $('<table class="table table-striped table-bordered" '+
+                                'style="width: 100%; margin-left: 0px; margin-right: 0px;" id="' + self.pref + expID + '-table"/>');
+                            tabContent.append(tableGenes);
+                            var geneTableSettings = {
+                                "sPaginationType": "full_numbers",
+                                "iDisplayLength": 10,
+                                "aaData": [],
+                                "aaSorting": [[ 0, "asc" ], [1, "desc"]],
+                                "aoColumns": [
+                                    {sTitle: "Gene", mData: "geneID"},
+                                    {sTitle: "Description", mData: "geneDescription", sWidth:"30%"},
+                                ],
+                                "oLanguage": {
+                                    "sEmptyTable": "No genes found!",
+                                    "sSearch": "Search: "
+                                },
+				//'fnDrawCallback': eventsGeneTab
+                            };
+
+                            var geneTableData = [];
+			    
+                            for(var geneID in sickGenes){
+				var geneIDtoDisplay = self.genomeFeatures[ sickGenes[geneID] ].id;
+
+				var geneFunc = self.genomeFeatures[ sickGenes[geneID] ]['function'];
+				if (!geneFunc){
+				    geneFunc = '-';
+				}
+
+                                geneTableData.push({
+                                    'geneID' : geneIDtoDisplay,
+                                    'geneDescription' : geneFunc,
+                                });
+                            }
+
+                            geneTableSettings.aaData = geneTableData;
+                            tabPane.kbaseTabs('addTab', {tab: expID, content: tabContent, canDelete : true, show: true});
+                            tableGenes.dataTable(geneTableSettings);
+                        });
+			eventsMoreDescription();
                     };
 
 
-                    //////////////////// Events for Show More/less Description  ////////////////////////////////////////////          
+                    //////////////////// Events for Show More/less Description  ////////////////////////////////////////////       
                     function eventsMoreDescription() {
                         $('.show-more'+self.pref).unbind('click');
                         $('.show-more'+self.pref).click(function() {
@@ -206,6 +278,28 @@
             });
         },
        
+	prepareGenomeFeatures: function(kbws, gnmref) {//self.kbws self.genomeRef 
+            var self = this;
+            var subsetRequests = [{ref: gnmref, included:
+				   ["/features/[*]/aliases",
+				    "/features/[*]/annotations",
+				    "/features/[*]/function",
+				    "/features/[*]/id",
+				    "/features/[*]/location",
+				    "/features/[*]/protein_translation_length",
+				    "/features/[*]/dna_translation_length",
+				    "/features/[*]/type"]
+				  }];
+            kbws.get_object_subset(subsetRequests, 
+				   function(data) {
+				       self.genomeFeatures = data[0].data.features;
+				   },
+				   function(error){
+				       self.clientError(error);
+				   }
+				  );                            
+	},
+	
         prepareVizData: function(){
             var self = this;
 
