@@ -33,6 +33,7 @@
 	experiments: [],
 	experimentToSickGenes: {},
 	genesToLog: [],
+	//plotArea: $('<div>Hello Bill</div>'),
 
         init: function(options) {
             this._super(options);
@@ -122,6 +123,7 @@
                     container.empty();
                     var tabPane = $('<div id="'+self.pref+'tab-content">');
                     container.append(tabPane);
+		    container.append(self.plotArea);
                     tabPane.kbaseTabs({canDelete : true, tabs : []});                    
                     ///////////////////////////////////// Overview table ////////////////////////////////////////////           
                     var tabOverview = $("<div/>");
