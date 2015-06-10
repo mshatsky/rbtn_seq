@@ -9,7 +9,6 @@
 (function ($) {
     $.scatterPlots = function () {
         var sPlots = {
-            
             sData: {
                 "values": {},
                 "dataSetObjs": [],
@@ -23,7 +22,7 @@
             chart_dimensions: {},
             padding: 25, // area between cells
             cellAreaMargin: 16, // adds a bit to the min/max range of cell data so that data points aren't on the boarders
-                 
+
             /*
              * Tag data structure
              */
@@ -34,32 +33,30 @@
             //Declare dataTables handle for the dataPointsTable to make sure it is only created once
             //otherwise dataTables freaks out
             dataPointsTable: 0,
-            
             plotAreaContainer: $('<div id="plotareaContainer"></div>'),
-
-/*
-<script src="http://0.0.0.0:8080/assets/js/DataScatter.js"></script> \
-<link href="http://0.0.0.0:8080/assets/css/kbase-common.css" rel="stylesheet"> \
-            <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
-<link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
-<script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
-<script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
-
-<script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
-<script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
-<script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
-<link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
-<link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
-
-
-
-<div class="container"> \
-      <div class="row"> \
-                  </div> \
-
-
-*/
+            /*
+             <script src="http://0.0.0.0:8080/assets/js/DataScatter.js"></script> \
+             <link href="http://0.0.0.0:8080/assets/css/kbase-common.css" rel="stylesheet"> \
+             <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
+             <link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
+             <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
+             <script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
+             
+             <script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
+             <script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
+             <script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
+             <link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
+             <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
+             <link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
+             
+             
+             
+             <div class="container"> \
+             <div class="row"> \
+             </div> \
+             
+             
+             */
             plotContainer: '\
 <link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
 \
@@ -70,65 +67,65 @@
       <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
       </div> \
 ',
-   /*         
-                       plotContainer: '\
-<script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
-<script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
-<script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
-<script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
-<script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
-<link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
-<link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
-<link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
-<link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
-\
-<div class="container"> \
-      <div class="row"> \
-        <div class="span9"> \
-          <div id="plotarea"> \
-          </div> \
-        </div> \
-        <div class="span3"> \
-          <ul class="nav nav-tabs" id="myTab"> \
-            <li class="active"><a href="#dataSets" data-toggle="tab">Data Sets</a></li> \
-            <li><a href="#dataPointTags" data-toggle="tab">Tags</a></li> \
-          </ul> \
-          <div class="tab-content"> \
-            <div class="tab-pane active" id="dataSets"> \
-              <table id="key" class="accordian"> \
-              </table> \
-            </div> \
-            <div class="tab-pane" id="dataPointTags"> \
-              <form class="form-horizontal"> \
-                <input class="span3" type="text" id="inputTag" placeholder="tag name" data-provide="typeahead" autocomplete="off" onchange="check_tag()"> \
-                <textarea class="span3" rows="3" id="inputTagDataPointNames" placeholder="data point names..."></textarea> \
-                <button id="addTagButton"class="btn btn-primary btn-block" type="button" onclick="addTag()">Add</button> \
-                <table id="tagTable"> \
-                </table> \
-            </div> \
-          </div> \
-        </div> \
-      </div> \
-\
-      <div class="row"> \
-        <div id="this.dataPointsTableContainer" class="span9"> \
-          <table id="dataPointsTable"> \
-          </table> \
-        </div> \
-      </div> \
-\
-      <div class="row"> \
-        <div class="span9"> \
-          <div id="table"> \
-          </div> \
-        </div> \
-      </div> \
-\
-      <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
-      </div> \
-',
- */
+            /*         
+             plotContainer: '\
+             <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
+             <script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
+             <script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
+             <script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
+             <script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
+             <link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
+             <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
+             <link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
+             <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
+             <link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
+             \
+             <div class="container"> \
+             <div class="row"> \
+             <div class="span9"> \
+             <div id="plotarea"> \
+             </div> \
+             </div> \
+             <div class="span3"> \
+             <ul class="nav nav-tabs" id="myTab"> \
+             <li class="active"><a href="#dataSets" data-toggle="tab">Data Sets</a></li> \
+             <li><a href="#dataPointTags" data-toggle="tab">Tags</a></li> \
+             </ul> \
+             <div class="tab-content"> \
+             <div class="tab-pane active" id="dataSets"> \
+             <table id="key" class="accordian"> \
+             </table> \
+             </div> \
+             <div class="tab-pane" id="dataPointTags"> \
+             <form class="form-horizontal"> \
+             <input class="span3" type="text" id="inputTag" placeholder="tag name" data-provide="typeahead" autocomplete="off" onchange="check_tag()"> \
+             <textarea class="span3" rows="3" id="inputTagDataPointNames" placeholder="data point names..."></textarea> \
+             <button id="addTagButton"class="btn btn-primary btn-block" type="button" onclick="addTag()">Add</button> \
+             <table id="tagTable"> \
+             </table> \
+             </div> \
+             </div> \
+             </div> \
+             </div> \
+             \
+             <div class="row"> \
+             <div id="this.dataPointsTableContainer" class="span9"> \
+             <table id="dataPointsTable"> \
+             </table> \
+             </div> \
+             </div> \
+             \
+             <div class="row"> \
+             <div class="span9"> \
+             <div id="table"> \
+             </div> \
+             </div> \
+             </div> \
+             \
+             <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
+             </div> \
+             ',
+             */
             d3Plots: function (widthX) {
 
                 /*
@@ -169,7 +166,7 @@
                     height: this.container_dimensions.height - this.margins.top - this.margins.bottom
                 };
 
-                
+
 
 
                 // utility function to move elements to the front
@@ -179,8 +176,8 @@
                     });
                 };
 
-                
-                
+
+
                 //reset some variables and remove everything made by the previous datafile 
 
                 selectedSet = [];
@@ -251,7 +248,7 @@
                     "bFilter": true,
                     "asSorting": [[1, "asc"]]
                 });
-            
+
 
                 setDataTablesHover();
 
@@ -267,29 +264,29 @@
                 load_tags();
                 $("#loading").addClass("hidden");
 
-            
-                
+
+
                 function setDataTablesHover() {
                     /*
                      $(dataPointsTable.fnGetNodes()).hover(
-                            function () {
-                                $(this).css("background", "orange");
-                                var id = $(this).attr("id");
-                                d3.selectAll("circle#" + id).classed("highlighted", 1)
-                                        .attr("r", 6)
-                                        .moveToFront();
-                            },
-                            function () {
-                                $(this).css("background", "");
-                                var id = $(this).attr("id");
-                                d3.selectAll("circle#" + id).classed("highlighted", 0)
-                                        .attr("r", 4);
-                            }
-                    );
-                    */
+                     function () {
+                     $(this).css("background", "orange");
+                     var id = $(this).attr("id");
+                     d3.selectAll("circle#" + id).classed("highlighted", 1)
+                     .attr("r", 6)
+                     .moveToFront();
+                     },
+                     function () {
+                     $(this).css("background", "");
+                     var id = $(this).attr("id");
+                     d3.selectAll("circle#" + id).classed("highlighted", 0)
+                     .attr("r", 4);
+                     }
+                     );
+                     */
                 }
 
-            
+
                 /*
                  * check_tag()
                  * ----------
@@ -324,7 +321,7 @@
                  * processes form input for adding a tag and updates the tag list table
                  *
                  */
-                
+
                 function addTag() {
                     var tagName = $('#inputTag').val();
                     var taggedDataPointNames = $('#inputTagDataPointNames').val().split(/[, ]|\r\n|\n|\r/g);
@@ -523,7 +520,7 @@
                     }
                 }
 
-                
+
                 function load_tags() {
                     var tmpTags = {
                         "General_Secretion": "SO_0165\nSO_0166\nSO_0167\nSO_0168\nSO_0169\nSO_0170\nSO_0172\nSO_0173\nSO_0175\nSO_0176",
@@ -543,7 +540,7 @@
                     });
                 }
 
-           
+
             },
             /*
              * color_by_active_tags() 
@@ -572,7 +569,6 @@
                     }
                 }
             },
-
             cross: function (arrayA, arrayB) {
                 var matrixC = [], sizeA = arrayA.length, sizeB = arrayB.length, i, j;
                 if (this.hideDiagonal) {
@@ -590,10 +586,9 @@
                 }
                 return matrixC;
             },
-
             makePlot: function () {
-                var self=this;
-                
+                var self = this;
+
                 d3.select("svg").remove();
                 if (self.hideDiagonal) {
                     numCells = self.selectedSet.length - 1;
@@ -615,12 +610,10 @@
                         .attr("id", "scatterplot");
                 var x_axis_scale = {},
                         y_axis_scale = {};
-                
+
                 for (var i = 0; i < self.selectedSet.length; i++) {
-                    var dataSet =self.selectedSet[i];
-                      console.log("makePlot4: selSet: "+JSON.stringify(dataSet));    
-                      console.log("makePlot5: selSet: "+JSON.stringify(self.sData.dataSetObjs[ dataSet ]));    
-                
+                    var dataSet = self.selectedSet[i];
+
                     //going to add a bit of this.padding to the min and max value
                     var min = self.sData.dataSetObjs[dataSet].minValue - (((cellSize + self.cellAreaMargin) / cellSize - 1) * (self.sData.dataSetObjs[dataSet].maxValue - self.sData.dataSetObjs[dataSet].minValue)) / 2;
                     var max = parseFloat(self.sData.dataSetObjs[dataSet].maxValue) + parseFloat((((cellSize + self.cellAreaMargin) / cellSize - 1) * (self.sData.dataSetObjs[dataSet].maxValue - self.sData.dataSetObjs[dataSet].minValue)) / 2);
@@ -630,7 +623,8 @@
                     y_axis_scale[dataSet] = d3.scale.linear()
                             .domain([min, max])
                             .range([cellSize - self.padding / 2, self.padding / 2]);
-                };
+                }
+                ;
                 var axis = d3.svg.axis();
                 //.ticks(5)
                 //.tickSize( chart_dimensions.width );
@@ -701,8 +695,8 @@
                         .text(function (d) {
                             return self.sData.dataSetObjs[d.y].dataSetName;
                         });
-                        
-                        
+
+
                 function brushstart(p) {
                     if (brush.data !== p) {
                         cell.call(brush.clear());
@@ -768,7 +762,7 @@
                     }
 
                 }
-                
+
                 function plotCell(cellData) {
                     var cell = d3.select(this);
                     cell.append("rect")
@@ -787,6 +781,9 @@
                             .append("circle")
                             .attr("id", function (d) {
                                 return d.dataPointName;
+                            })
+                            .attr("tooltiptext", function (d) {
+                                return d.tooltiptext;
                             })
                             .attr("cx", function (d) {
                                 return x_axis_scale[cellData.x](self.sData.values[d.dataPointName][cellData.x]);
@@ -810,7 +807,12 @@
                             })
                             .on("mousemove", function () {
                                 //does not work properly on KBase: 
-                                return $('#tooltip').css("top", (d3.event.pageY + 15) + "px").css("left", (d3.event.pageX - 10) + "px");
+                                console.log("Offset: " + window.pageYOffset + " " + window.pageXOffset);
+                                console.log("Event: " + d3.event.pageY + " " + d3.event.pageX);
+                                var p = $('#notebook').offset();
+                                console.log("Notebook: " + p.top + " " + p.left);
+
+                                return $('#tooltip').css("top", (d3.event.pageY - 100) + "px").css("left", (d3.event.pageX - 350) + "px");
                                 //var matrix = this.getScreenCTM()
                                 //        .translate(+this.getAttribute("cx"), +this.getAttribute("cy"));
                                 //return $('#tooltip').css("top", (window.pageXOffset + matrix.e + 15) + "px").css("left", (window.pageYOffset + matrix.f - 10) + "px");
@@ -855,15 +857,14 @@
                     //d3.select("#key_square_" + this.selectedSet[i]).style("background", "#99CCFF");
                     //d3.select("#key_count_" + this.selectedSet[i]).text(i + 1);
                 }
-                console.log(JSON.stringify(this.selectedSet));    
                 setTimeout(this.makePlot(), 1);
                 this.color_by_active_tags();
-                
+
                 //for some reason something gets selected !!!
                 d3.selectAll(".selected").classed("selected", function (d) {
-                         return 0;
+                    return 0;
                 });
-                    
+
             }
         };
 
@@ -969,6 +970,31 @@
                         }
                 );
 
+
+
+                
+                console.log("Job0:" + self.genomeFeatures.length);
+                var jobGetGenomeFeatures = kbws.get_object_subset(
+                        [{ref: self.genomeRef, included:
+                                        ["/features/[*]/aliases",
+                                            "/features/[*]/annotations",
+                                            "/features/[*]/function",
+                                            "/features/[*]/id",
+                                            "/features/[*]/location",
+                                            "/features/[*]/protein_translation_length",
+                                            "/features/[*]/dna_translation_length",
+                                            "/features/[*]/type"]
+                            }],
+                        function (data) {
+                            self.genomeFeatures = data[0].data.features;
+                        },
+                        function (error) {
+                            self.clientError(error);
+                        }
+                );
+                console.log("Job1:" + self.genomeFeatures.length);
+
+
                 //allow sorting for num with html (sType : "num-html")
                 //http://datatables.net/plug-ins/sorting/num-html
                 jQuery.extend(jQuery.fn.dataTableExt.oSort, {
@@ -985,11 +1011,13 @@
                 });
 
                 // Launch jobs and vizualize data once they are done
-                $.when.apply($, [jobGetBarSeqExperimentResultsProperties]).done(function () {
+                $.when.apply($, [jobGetBarSeqExperimentResultsProperties,jobGetGenomeFeatures]).done(function () {
                     self.loading(false);
-                    self.prepareVizData();
-                    self.prepareGenomeFeatures(kbws, self.genomeRef);
+                    console.log("Job2:" + self.genomeFeatures.length);
 
+                    //self.prepareGenomeFeatures(kbws, self.genomeRef);
+                    self.prepareVizData();
+                    
                     ///////////////////////////////////// Instantiating Tabs ////////////////////////////////////////////
                     container.empty();
                     var tabPane = $('<div id="' + self.pref + 'tab-content">');
@@ -1064,7 +1092,8 @@
                                     'sickGenesLong': sickGenes.length
                                 }
                         );
-                    };
+                    }
+                    ;
                     experimentsTableSettings.aaData = experimentsTableData;
                     tableExperiments = tableExperiments.dataTable(experimentsTableSettings);
 
@@ -1072,7 +1101,7 @@
                     function eventsExperimentsTab() {
                         $('.checkbox' + self.pref).unbind('click');
                         $('.checkbox' + self.pref).click(function () {
-                            self.sPlots.set_selected_dataSet( Number($(this).attr('value')));
+                            self.sPlots.set_selected_dataSet(Number($(this).attr('value')));
 
                             //$(this).attr('value')
                             //if($(this).is(":checked")) {
@@ -1113,8 +1142,8 @@
                                 "aaData": [],
                                 "aaSorting": [[0, "asc"], [1, "desc"]],
                                 "aoColumns": [
-                                    {sTitle: "Gene", mData: "geneID"},
-                                    {sTitle: "Description", mData: "geneDescription", sWidth: "30%"},
+                                    {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
+                                    {sTitle: "Description", mData: "geneDescription"},
                                 ],
                                 "oLanguage": {
                                     "sEmptyTable": "No genes found!",
@@ -1182,12 +1211,12 @@
                     self.sPlots = $.scatterPlots( );
                     self.sPlots.sData = self.plotData;
                     //console.log("Test0:"+self.plotData["dataPointObjs"].length);
-               
+
                     container.append(self.sPlots.plotAreaContainer);
                     document.getElementById('plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotContainer);
                     self.sPlots.d3Plots(self.$elem.width());
                     $("#plotarea").empty(); //clean allocated area
-                 });
+                });
             });
         },
         prepareGenomeFeatures: function (kbws, gnmref) {//self.kbws self.genomeRef 
@@ -1202,6 +1231,7 @@
                                 "/features/[*]/dna_translation_length",
                                 "/features/[*]/type"]
                 }];
+            console.log("Job0:" + self.genomeFeatures.length);
             kbws.get_object_subset(subsetRequests,
                     function (data) {
                         self.genomeFeatures = data[0].data.features;
@@ -1210,6 +1240,8 @@
                         self.clientError(error);
                     }
             );
+            console.log("Job1:" + self.genomeFeatures.length);
+      
         },
         prepareVizData: function () {
             var self = this;
@@ -1228,34 +1260,35 @@
                 var maxV = -999;
 
                 //shorten experiment name !!!
-                var t = String( self.barSeqExperimentResultsData.experiments[ iExp ][0].name ).split("|");
-                if(t.length > 0) {
-                    self.barSeqExperimentResultsData.experiments[ iExp ][0].name_short = String( t[ t.length-1 ] ).replace(/_/g, " ");
+                var t = String(self.barSeqExperimentResultsData.experiments[ iExp ][0].name).split("|");
+                if (t.length > 0) {
+                    self.barSeqExperimentResultsData.experiments[ iExp ][0].name_short = String(t[ t.length - 1 ]).replace(/_/g, " ");
                 }
-                
+
                 for (var i = 0; i < experArray.length; i++) {
-                    
+
                     //typedef tuple<feature_ref f_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
 
-                    var geneID = experArray[i][0];
+                    var geneIndex = experArray[i][0];
+                    var geneName = self.genomeFeatures[ geneIndex ].id;
                     var logRatio = experArray[i][4];
 
-                    self.annotatedGenes[ geneID ] = 1;
+                    self.annotatedGenes[ geneIndex ] = 1;
 
                     self.genesToLog.push(
                             {
-                                'gene': "g" + geneID,
+                                'gene': geneName,
                                 'logRatio': logRatio,
                                 'experiment': experArray[i][0].name
                             }
                     );
 
-                    if (!(("g" + geneID) in self.plotData["values"])) {
-                        self.plotData["values"]["g" + geneID] = {};
+                    if (!((geneName) in self.plotData["values"])) {
+                        self.plotData["values"][geneName] = {};
                     }
-                    self.plotData["values"]["g" + geneID][iExp] = logRatio;
-                    self.plotData["values"]["g" + geneID]["dataPointName"] = "g" + geneID;
-                    self.plotData["values"]["g" + geneID]["dataPointDesc"] = "g" + geneID;
+                    self.plotData["values"][geneName][iExp] = logRatio;
+                    self.plotData["values"][geneName]["dataPointName"] = geneName;
+                    self.plotData["values"][geneName]["dataPointDesc"] = geneName;
 
                     maxV = Math.max(maxV, logRatio);
                     minV = Math.min(minV, logRatio);
@@ -1271,7 +1304,7 @@
                         }
                         self.experimentToSickGenes[
                                 self.barSeqExperimentResultsData.experiments[ iExp ][0].name
-                        ].push(geneID);
+                        ].push(geneIndex);
                     }
                 }
 
@@ -1289,11 +1322,21 @@
                         );
             }
 
+            /*for (var g in self.genomeFeatures) {
+             console.log('Geneid1: '+ g);
+             console.log('Geneid2: '+ self.genomeFeatures[ g ].id);
+             console.log('Geneid3: '+ self.genomeFeatures[ g ]['function']);
+             
+             }*/
             for (var g in self.annotatedGenes) {
+                var geneFunc = self.genomeFeatures[ g ]['function'];
+                if (!geneFunc) {
+                    geneFunc = '-';
+                }
                 self.plotData["dataPointObjs"].push(
                         {
-                            "dataPointName": "g" + g, // names are unique and cannot be numbers, otherwise access ["g"] doesnot work
-                            "dataPointDesc": "g" + g
+                            "dataPointName": self.genomeFeatures[ g ].id, // names are unique and cannot be numbers, otherwise access ["g"] doesnot work
+                            "dataPointDesc": geneFunc
                         });
             }
         },
@@ -1983,7 +2026,7 @@
 
                     }
                 }
-                
+
                 function setDataTablesHover() {
                     $(dataPointsTable.fnGetNodes()).hover(
                             function () {
@@ -2276,7 +2319,7 @@
                     $('#tag_order_' + activeTags[i]["id"]).html(i + 1);
                 }
             }
-            
+
             /*
              * color_by_active_tags() 
              * ----------------------
