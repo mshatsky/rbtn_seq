@@ -7,29 +7,9 @@
 
 
 (function ($) {
-    $.jPanelMenu = function ( ) {
-        var jpm = {
-            animated: true,
-            openMenu: function ( ) {
-
-                this.setMenuStyle( );
-            },
-            closeMenu: function ( ) {
-                this.setMenuStyle( );
-            },
-            setMenuStyle: function ( ) {
-                this.animated = 1;
-            }
-        };
-
-        return jpm;
-    };
-})(jQuery);
-
-(function ($) {
     $.scatterPlots = function () {
         var sPlots = {
-            test: -3,
+            
             sData: {
                 "values": {},
                 "dataSetObjs": [],
@@ -44,20 +24,64 @@
             padding: 25, // area between cells
             cellAreaMargin: 16, // adds a bit to the min/max range of cell data so that data points aren't on the boarders
                  
+            /*
+             * Tag data structure
+             */
+            tags: {},
+            activeTags: [],
+            tagsByDataPointName: {}, // {"name" : [] array of tags }
+
+            //Declare dataTables handle for the dataPointsTable to make sure it is only created once
+            //otherwise dataTables freaks out
+            dataPointsTable: 0,
+            
             plotAreaContainer: $('<div id="plotareaContainer"></div>'),
+
+/*
+<script src="http://0.0.0.0:8080/assets/js/DataScatter.js"></script> \
+<link href="http://0.0.0.0:8080/assets/css/kbase-common.css" rel="stylesheet"> \
+            <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
+<link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
+<script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
+<script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
+
+<script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
+<script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
+<script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
+<link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
+<link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
+
+
+
+<div class="container"> \
+      <div class="row"> \
+                  </div> \
+
+
+*/
             plotContainer: '\
+<link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
+\
+      <div class="span9"> \
+          <div id="plotarea"> \
+          </div> \
+      </div> \
+      <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
+      </div> \
+',
+   /*         
+                       plotContainer: '\
 <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
 <script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
 <script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
-<script src="http://0.0.0.0:8080/assets/js/DataScatter.js"></script> \
 <script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
 <script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
 <link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
 <link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
 <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
-<link href="http://0.0.0.0:8080/assets/css/kbase-common.css" rel="stylesheet"> \
-<link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter.css"> \
+<link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
 \
 <div class="container"> \
       <div class="row"> \
@@ -88,7 +112,7 @@
       </div> \
 \
       <div class="row"> \
-        <div id="dataPointsTableContainer" class="span9"> \
+        <div id="this.dataPointsTableContainer" class="span9"> \
           <table id="dataPointsTable"> \
           </table> \
         </div> \
@@ -104,8 +128,8 @@
       <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
       </div> \
 ',
-            d3Plots: function (self) {
-                //var self = this;
+ */
+            d3Plots: function (widthX) {
 
                 /*
                  * KBase Data Scatter Plot Widget
@@ -135,12 +159,10 @@
                  *      - More user defined fields in upload tabfile "systematic name", etc
                  */
 
-
-                var selectedDataPoints = {};
-
                 //var container_dimensions = {width: 900, height: 900},
                 //margins = {top: 60, right: 60, bottom: 60, left: 60},
-                this.container_dimensions = {width: self.$elem.width() - 120, height: self.$elem.width() - 120};
+                //this.container_dimensions = {width: self.$elem.width() - 120, height: self.$elem.width() - 120};
+                this.container_dimensions = {width: widthX, height: widthX};
                 this.margins = {top: 60, right: 60, bottom: 60, left: 60};
                 this.chart_dimensions = {
                     width: this.container_dimensions.width - this.margins.left - this.margins.right,
@@ -148,18 +170,6 @@
                 };
 
                 
-
-                /*
-                 * Tag data structure
-                 */
-
-                var tags = {};
-                var activeTags = [];
-                var tagsByDataPointName = {}; // {"name" : [] array of tags }
-
-                //Declare dataTables handle for the dataPointsTable to make sure it is only created once
-                //otherwise dataTables freaks out
-                var dataPointsTable = 0;
 
 
                 // utility function to move elements to the front
@@ -169,15 +179,7 @@
                     });
                 };
 
-                var tmp;
-
-                //console.log("Test1:"+test);
-                console.log("Test1.1:"+this.test);
-                console.log("Test1.2:"+self.test);
                 
-                
-                console.log("Test1.3:"+this.sData["dataPointObjs"].length);
-               
                 
                 //reset some variables and remove everything made by the previous datafile 
 
@@ -245,7 +247,7 @@
                     $("#dataPointsTable").append("<tr id=" + obj.dataPointName + ">" + str + "</tr>");
                 }
 
-                dataPointsTable = $('#dataPointsTable').dataTable({"bPaginate": true,
+                this.dataPointsTable = $('#dataPointsTable').dataTable({"bPaginate": true,
                     "bFilter": true,
                     "asSorting": [[1, "asc"]]
                 });
@@ -266,26 +268,10 @@
                 $("#loading").addClass("hidden");
 
             
-                function cross(arrayA, arrayB) {
-                    var matrixC = [], sizeA = arrayA.length, sizeB = arrayB.length, i, j;
-                    if (this.hideDiagonal) {
-                        for (i = 0; i < sizeA; i++) {
-                            for (j = i + 1; j < sizeB; j++) {
-                                matrixC.push({x: arrayA[i], i: i, y: arrayB[j], j: j});
-                            }
-                        }
-                    } else {
-                        for (i = -1; ++i < sizeA; ) {
-                            for (j = -1; ++j < sizeB; ) {
-                                matrixC.push({x: arrayA[i], i: i, y: arrayB[j], j: j});
-                            }
-                        }
-                    }
-                    return matrixC;
-                }
-
+                
                 function setDataTablesHover() {
-                    $(dataPointsTable.fnGetNodes()).hover(
+                    /*
+                     $(dataPointsTable.fnGetNodes()).hover(
                             function () {
                                 $(this).css("background", "orange");
                                 var id = $(this).attr("id");
@@ -300,6 +286,7 @@
                                         .attr("r", 4);
                             }
                     );
+                    */
                 }
 
             
@@ -317,14 +304,14 @@
                     var tagName = $('#inputTag').val();
                     var tagExists = false;
 
-                    for (var i in tags) {
+                    for (var i in this.tags) {
                         if (i === tagName) {
                             tagExists = true;
                         }
                     }
 
                     if (tagExists) {
-                        $('#inputTagDataPointNames').val(tags[i]['dataPointNames'].join("\n"));
+                        $('#inputTagDataPointNames').val(this.tags[i]['dataPointNames'].join("\n"));
                         $('#addTagButton').html("Replace");
                     } else {
                         $('#addTagButton').html("Add");
@@ -363,13 +350,13 @@
                     var tagActive = false;
                     var color = "";
 
-                    for (var i in tags) {
+                    for (var i in this.tags) {
                         if (i === tagName) {
                             tagExists = true;
-                            for (var j = 0; j < activeTags.length; j++) {
-                                if (activeTags[j]["id"] === tagName) {
+                            for (var j = 0; j < this.activeTags.length; j++) {
+                                if (this.activeTags[j]["id"] === tagName) {
                                     tagActive = true;
-                                    color = activeTags[j]["color"];
+                                    color = this.activeTags[j]["color"];
                                     unset_tag_color(tagName);
                                 }
                             }
@@ -378,17 +365,17 @@
 
 
 
-                    tags[tagName] = {"status": 0,
+                    this.tags[tagName] = {"status": 0,
                         "dataPointNames": []
                     };
 
 
                     for (var i = 0; i < validDataPointNames.length; i++) {
-                        tags[ tagName ]["dataPointNames"].push(validDataPointNames[i]);
-                        if (tagsByDataPointName[validDataPointNames[i]] == undefined) {
-                            tagsByDataPointName[validDataPointNames[i]] = [];
+                        this.tags[ tagName ]["dataPointNames"].push(validDataPointNames[i]);
+                        if (this.tagsByDataPointName[validDataPointNames[i]] == undefined) {
+                            this.tagsByDataPointName[validDataPointNames[i]] = [];
                         }
-                        tagsByDataPointName[validDataPointNames[i]].push(tagName);
+                        this.tagsByDataPointName[validDataPointNames[i]].push(tagName);
                     }
 
                     /*
@@ -478,19 +465,19 @@
 
                     $('#colorSelect_' + id).css("background-color", tagColor);
 
-                    for (var i = 0; i < tags[id]["dataPointNames"].length; i++) {
-                        d3.selectAll("circle#" + tags[id]["dataPointNames"][i])
+                    for (var i = 0; i < this.tags[id]["dataPointNames"].length; i++) {
+                        d3.selectAll("circle#" + this.tags[id]["dataPointNames"][i])
                                 .classed("tag_" + id, 1)
                                 .moveToFront();
                     }
 
-                    for (var i = 0; i < activeTags.length; i++) {
-                        if (activeTags[i]["id"] === id) {
-                            activeTags.splice(i, 1);
+                    for (var i = 0; i < this.activeTags.length; i++) {
+                        if (this.activeTags[i]["id"] === id) {
+                            this.activeTags.splice(i, 1);
                         }
                     }
-                    activeTags.push({"id": id, "color": tagColor});
-                    $('#tag_order_' + id).html(activeTags.length);
+                    this.activeTags.push({"id": id, "color": tagColor});
+                    $('#tag_order_' + id).html(this.activeTags.length);
 
                     update_tag_order();
 
@@ -508,13 +495,13 @@
 
                     $('#colorSelect_' + id).css("background-color", "");
 
-                    for (var i = 0; i < tags[id]["dataPointNames"].length; i++) {
-                        d3.selectAll("circle#" + tags[id]["dataPointNames"][i])
+                    for (var i = 0; i < this.tags[id]["dataPointNames"].length; i++) {
+                        d3.selectAll("circle#" + this.tags[id]["dataPointNames"][i])
                                 .classed("tag_" + id, 0);
                     }
-                    for (var i = 0; i < activeTags.length; i++) {
-                        if (activeTags[i]["id"] === id) {
-                            activeTags.splice(i, 1);
+                    for (var i = 0; i < this.activeTags.length; i++) {
+                        if (this.activeTags[i]["id"] === id) {
+                            this.activeTags.splice(i, 1);
                         }
                     }
 
@@ -531,39 +518,12 @@
                  */
 
                 function update_tag_order() {
-                    for (var i = 0; i < activeTags.length; i++) {
-                        $('#tag_order_' + activeTags[i]["id"]).html(i + 1);
+                    for (var i = 0; i < this.activeTags.length; i++) {
+                        $('#tag_order_' + this.activeTags[i]["id"]).html(i + 1);
                     }
                 }
 
-                /*
-                 * color_by_active_tags() 
-                 * ----------------------
-                 * re-colors all dataPoints using the active tags in activeTags object
-                 *
-                 * returns nothing
-                 */
-
-                function color_by_active_tags() {
-                    for (var i = 0; i < activeTags.length; i++) {
-
-                        var id = activeTags[i]["id"];
-                        var color = activeTags[i]["color"];
-
-                        $('#tag_' + id).remove();
-                        $("<style type='text/css' id='tag_" + id + "'>.tag_" +
-                                id + "{ fill: " +
-                                color + "; fill-opacity: .7; }</style>")
-                                .appendTo("head");
-
-                        for (var t = 0; t < tags[id]["dataPointNames"].length; t++) {
-                            d3.selectAll("circle#" + tags[id]["dataPointNames"][t])
-                                    .classed("tag_" + id, 1)
-                                    .moveToFront();
-                        }
-                    }
-                }
-
+                
                 function load_tags() {
                     var tmpTags = {
                         "General_Secretion": "SO_0165\nSO_0166\nSO_0167\nSO_0168\nSO_0169\nSO_0170\nSO_0172\nSO_0173\nSO_0175\nSO_0176",
@@ -585,48 +545,91 @@
 
            
             },
-            makePlot: function () {
-                console.log("makePlot0: selSet: "+JSON.stringify(this.selectedSet));    
-                console.log("makePlot1: selSet: "+JSON.stringify(this.sData.dataSetObjs[0]));    
-                console.log("makePlot2: selSet: "+JSON.stringify(this.sData.dataSetObjs[31]));    
-                //console.log("makePlot3: dataSetObjs: "+JSON.stringify(this.sData.dataSetObjs));    
-    
-                d3.select("svg").remove();
+            /*
+             * color_by_active_tags() 
+             * ----------------------
+             * re-colors all dataPoints using the active tags in activeTags object
+             *
+             * returns nothing
+             */
+
+            color_by_active_tags: function () {
+                for (var i = 0; i < this.activeTags.length; i++) {
+
+                    var id = this.activeTags[i]["id"];
+                    var color = this.activeTags[i]["color"];
+
+                    $('#tag_' + id).remove();
+                    $("<style type='text/css' id='tag_" + id + "'>.tag_" +
+                            id + "{ fill: " +
+                            color + "; fill-opacity: .7; }</style>")
+                            .appendTo("head");
+
+                    for (var t = 0; t < this.tags[id]["dataPointNames"].length; t++) {
+                        d3.selectAll("circle#" + this.tags[id]["dataPointNames"][t])
+                                .classed("tag_" + id, 1)
+                                .moveToFront();
+                    }
+                }
+            },
+
+            cross: function (arrayA, arrayB) {
+                var matrixC = [], sizeA = arrayA.length, sizeB = arrayB.length, i, j;
                 if (this.hideDiagonal) {
-                    numCells = this.selectedSet.length - 1;
-                    xCells = this.selectedSet.slice(0, -1);
-                    yCells = this.selectedSet.slice(1);
+                    for (i = 0; i < sizeA; i++) {
+                        for (j = i + 1; j < sizeB; j++) {
+                            matrixC.push({x: arrayA[i], i: i, y: arrayB[j], j: j});
+                        }
+                    }
                 } else {
-                    numCells = this.selectedSet.length;
-                    xCells = this.selectedSet;
-                    yCells = this.selectedSet;
+                    for (i = -1; ++i < sizeA; ) {
+                        for (j = -1; ++j < sizeB; ) {
+                            matrixC.push({x: arrayA[i], i: i, y: arrayB[j], j: j});
+                        }
+                    }
+                }
+                return matrixC;
+            },
+
+            makePlot: function () {
+                var self=this;
+                
+                d3.select("svg").remove();
+                if (self.hideDiagonal) {
+                    numCells = self.selectedSet.length - 1;
+                    xCells = self.selectedSet.slice(0, -1);
+                    yCells = self.selectedSet.slice(1);
+                } else {
+                    numCells = self.selectedSet.length;
+                    xCells = self.selectedSet;
+                    yCells = self.selectedSet;
                 }
 
-                var cellSize = this.chart_dimensions.width / numCells;
+                var cellSize = self.chart_dimensions.width / numCells;
                 scatterplot = d3.select("#plotarea")
                         .append("svg")
-                        .attr("width", this.container_dimensions.width)
-                        .attr("height", this.container_dimensions.height)
+                        .attr("width", self.container_dimensions.width)
+                        .attr("height", self.container_dimensions.height)
                         .append("g")
-                        .attr("transform", "translate(" + this.margins.left + "," + this.margins.top + ")")
+                        .attr("transform", "translate(" + self.margins.left + "," + self.margins.top + ")")
                         .attr("id", "scatterplot");
                 var x_axis_scale = {},
                         y_axis_scale = {};
                 
-                for (var i = 0; i < this.selectedSet.length; i++) {
-                    var dataSet =this.selectedSet[i];
+                for (var i = 0; i < self.selectedSet.length; i++) {
+                    var dataSet =self.selectedSet[i];
                       console.log("makePlot4: selSet: "+JSON.stringify(dataSet));    
-                      console.log("makePlot5: selSet: "+JSON.stringify(this.sData.dataSetObjs[ dataSet ]));    
+                      console.log("makePlot5: selSet: "+JSON.stringify(self.sData.dataSetObjs[ dataSet ]));    
                 
                     //going to add a bit of this.padding to the min and max value
-                    var min = this.sData.dataSetObjs[dataSet].minValue - (((cellSize + this.cellAreaMargin) / cellSize - 1) * (this.sData.dataSetObjs[dataSet].maxValue - this.sData.dataSetObjs[dataSet].minValue)) / 2;
-                    var max = parseFloat(this.sData.dataSetObjs[dataSet].maxValue) + parseFloat((((cellSize + this.cellAreaMargin) / cellSize - 1) * (this.sData.dataSetObjs[dataSet].maxValue - this.sData.dataSetObjs[dataSet].minValue)) / 2);
+                    var min = self.sData.dataSetObjs[dataSet].minValue - (((cellSize + self.cellAreaMargin) / cellSize - 1) * (self.sData.dataSetObjs[dataSet].maxValue - self.sData.dataSetObjs[dataSet].minValue)) / 2;
+                    var max = parseFloat(self.sData.dataSetObjs[dataSet].maxValue) + parseFloat((((cellSize + self.cellAreaMargin) / cellSize - 1) * (self.sData.dataSetObjs[dataSet].maxValue - self.sData.dataSetObjs[dataSet].minValue)) / 2);
                     x_axis_scale[dataSet] = d3.scale.linear()
                             .domain([min, max])
-                            .range([this.padding / 2, cellSize - this.padding / 2]);
+                            .range([self.padding / 2, cellSize - self.padding / 2]);
                     y_axis_scale[dataSet] = d3.scale.linear()
                             .domain([min, max])
-                            .range([cellSize - this.padding / 2, this.padding / 2]);
+                            .range([cellSize - self.padding / 2, self.padding / 2]);
                 };
                 var axis = d3.svg.axis();
                 //.ticks(5)
@@ -658,12 +661,12 @@
                         .on("brush", brush)
                         .on("brushend", brushend);
                 var cell = scatterplot.selectAll("g.cell")
-                        .data(cross(this.selectedSet, this.selectedSet))
+                        .data(self.cross(self.selectedSet, self.selectedSet))
                         .enter()
                         .append("g")
                         .attr("class", "cell")
                         .attr("transform", function (d) {
-                            return "translate(" + d.i * cellSize + "," + (this.selectedSet.length - 1 - d.j) * cellSize + ")";
+                            return "translate(" + d.i * cellSize + "," + (self.selectedSet.length - 1 - d.j) * cellSize + ")";
                         })
                         .each(plotCell);
                 // Titles for the diagonal.
@@ -690,38 +693,106 @@
                         .attr("y", cellSize)
                         .attr("text-anchor", "middle")
                         .text(function (d) {
-                            return this.sData.dataSetObjs[d.x].dataSetName;
+                            return self.sData.dataSetObjs[d.x].dataSetName;
                         });
                 cell.append("text")
                         .attr("text-anchor", "middle")
                         .attr("transform", "translate(" + cellSize + "," + cellSize / 2 + ") rotate(-90)")
                         .text(function (d) {
-                            return this.sData.dataSetObjs[d.y].dataSetName;
+                            return self.sData.dataSetObjs[d.y].dataSetName;
                         });
+                        
+                        
+                function brushstart(p) {
+                    if (brush.data !== p) {
+                        cell.call(brush.clear());
+                        brush.x(x_axis_scale[p.x]).y(y_axis_scale[p.y]).data = p;
+                    }
+                }
+
+                function brush(p) {
+                    var e = brush.extent(); //2d array of x,y coords for select rectangle
+
+                    //can get a speed up by just selecting the circles from the cell
+                    scatterplot.selectAll("circle").classed("selected", function (d) {
+                        if (e[0][0] <= self.sData.values[d.dataPointName][p.x] && self.sData.values[d.dataPointName][p.x] <= e[1][0]
+                                && e[0][1] <= self.sData.values[d.dataPointName][p.y] && self.sData.values[d.dataPointName][p.y] <= e[1][1]) {
+
+                            return 1;
+                        }
+                        else {
+                            return 0;
+                        }
+
+                    });
+                }
+
+                function brushend() {
+                    var tableData = [];
+                    var uniquePoints = [];
+                    var points = [];
+                    var nTrArray = [];
+                    if (brush.empty()) {
+                        scatterplot.selectAll("circle").classed("selected", 0);
+                        self.dataPointsTable.fnClearTable();
+                        for (var d in self.sData.dataPointObjs) {
+                            var tmp = [self.sData.dataPointObjs[d].dataPointName, self.sData.dataPointObjs[d].dataPointDesc];
+                            tableData.push(tmp);
+                        }
+                        nTrArray = self.dataPointsTable.fnAddData(tableData);
+                        for (var i in nTrArray) {
+                            self.dataPointsTable.fnSettings().aoData[ i ].nTr.id = self.sData.dataPointObjs[i].dataPointName;
+                        }
+                        setDataTablesHover();
+                    }
+                    else {
+                        d3.selectAll(".selected").classed("selected", function (d) {
+                            points[d.dataPointName] = d.dataPointName;
+                            return 1;
+                        }).moveToFront();
+                        for (var i in points) {
+                            uniquePoints.push(points[i]);
+                        }
+
+                        self.dataPointsTable.fnClearTable();
+                        for (var d in uniquePoints) {
+                            var tmp = [uniquePoints[d], self.sData.values[ uniquePoints[d] ].dataPointDesc];
+                            tableData.push(tmp);
+                        }
+
+                        nTrArray = self.dataPointsTable.fnAddData(tableData);
+                        for (var i in nTrArray) {
+                            self.dataPointsTable.fnSettings().aoData[ i ].nTr.id = uniquePoints[i];
+                        }
+                        setDataTablesHover();
+                    }
+
+                }
+                
                 function plotCell(cellData) {
                     var cell = d3.select(this);
                     cell.append("rect")
                             .attr("class", "frame")
-                            .attr("x", this.padding / 2)
-                            .attr("y", this.padding / 2)
-                            .attr("width", cellSize - this.padding)
-                            .attr("height", cellSize - this.padding);
+                            .attr("x", self.padding / 2)
+                            .attr("y", self.padding / 2)
+                            .attr("width", cellSize - self.padding)
+                            .attr("height", cellSize - self.padding);
                     cell.call(brush.x(x_axis_scale[cellData.x]).y(y_axis_scale[cellData.y]));
                     // Have to put circles in last so that they 
                     // are in the front for the mouseover to work
 
                     cell.selectAll("circle")
-                            .data(this.sData.dataPointObjs)
+                            .data(self.sData.dataPointObjs)
                             .enter()
                             .append("circle")
                             .attr("id", function (d) {
                                 return d.dataPointName;
                             })
                             .attr("cx", function (d) {
-                                return x_axis_scale[cellData.x](this.sData.values[d.dataPointName][cellData.x]);
+                                return x_axis_scale[cellData.x](self.sData.values[d.dataPointName][cellData.x]);
                             })
                             .attr("cy", function (d) {
-                                return y_axis_scale[cellData.y](this.sData.values[d.dataPointName][cellData.y]);
+                                return y_axis_scale[cellData.y](self.sData.values[d.dataPointName][cellData.y]);
                             })
                             .attr("r", 4)
                             .on("mouseover", function (d) {
@@ -731,8 +802,8 @@
                                         .attr("r", 6)
                                         .moveToFront();
                                 d3.selectAll("tr#" + id).style("background", "orange");
-                                if (tagsByDataPointName[id] != undefined) {
-                                    tagStr = "<br>Tags: " + tagsByDataPointName[id].join(", ");
+                                if (self.tagsByDataPointName[id] != undefined) {
+                                    tagStr = "<br>Tags: " + self.tagsByDataPointName[id].join(", ");
                                 }
                                 $('#tooltip').html(id + ": " + d.dataPointDesc + tagStr);
                                 return $('#tooltip').css("visibility", "visible");
@@ -752,75 +823,6 @@
                                 d3.selectAll("tr#" + id).style("background", "");
                                 return $('#tooltip').css("visibility", "hidden");
                             });
-
-
-
-                    function brushstart(p) {
-                        if (brush.data !== p) {
-                            cell.call(brush.clear());
-                            brush.x(x_axis_scale[p.x]).y(y_axis_scale[p.y]).data = p;
-                        }
-                    }
-
-                    function brush(p) {
-                        var e = brush.extent(); //2d array of x,y coords for select rectangle
-
-                        //can get a speed up by just selecting the circles from the cell
-                        scatterplot.selectAll("circle").classed("selected", function (d) {
-                            if (e[0][0] <= this.sData.values[d.dataPointName][p.x] && this.sData.values[d.dataPointName][p.x] <= e[1][0]
-                                    && e[0][1] <= this.sData.values[d.dataPointName][p.y] && this.sData.values[d.dataPointName][p.y] <= e[1][1]) {
-
-                                return 1;
-                            }
-                            else {
-                                return 0;
-                            }
-
-                        });
-                    }
-                
-                    function brushend() {
-                        var tableData = [];
-                        var uniquePoints = [];
-                        var points = [];
-                        var nTrArray = [];
-                        if (brush.empty()) {
-                            scatterplot.selectAll("circle").classed("selected", 0);
-                            dataPointsTable.fnClearTable();
-                            for (var d in this.sData.dataPointObjs) {
-                                var tmp = [this.sData.dataPointObjs[d].dataPointName, this.sData.dataPointObjs[d].dataPointDesc];
-                                tableData.push(tmp);
-                            }
-                            nTrArray = dataPointsTable.fnAddData(tableData);
-                            for (var i in nTrArray) {
-                                dataPointsTable.fnSettings().aoData[ i ].nTr.id = this.sData.dataPointObjs[i].dataPointName;
-                            }
-                            setDataTablesHover();
-                        }
-                        else {
-
-                            d3.selectAll(".selected").classed("selected", function (d) {
-                                points[d.dataPointName] = d.dataPointName;
-                                return 1;
-                            }).moveToFront();
-                            for (var i in points) {
-                                uniquePoints.push(points[i]);
-                            }
-
-                            dataPointsTable.fnClearTable();
-                            for (var d in uniquePoints) {
-                                var tmp = [uniquePoints[d], this.sData.values[ uniquePoints[d] ].dataPointDesc];
-                                tableData.push(tmp);
-                            }
-
-                            nTrArray = dataPointsTable.fnAddData(tableData);
-                            for (var i in nTrArray) {
-                                dataPointsTable.fnSettings().aoData[ i ].nTr.id = uniquePoints[i];
-                            }
-                            setDataTablesHover();
-                        }
-
-                    }
                 }
             },
             set_selected_dataSet: function (id) {
@@ -855,7 +857,13 @@
                 }
                 console.log(JSON.stringify(this.selectedSet));    
                 setTimeout(this.makePlot(), 1);
-                color_by_active_tags();
+                this.color_by_active_tags();
+                
+                //for some reason something gets selected !!!
+                d3.selectAll(".selected").classed("selected", function (d) {
+                         return 0;
+                });
+                    
             }
         };
 
@@ -1051,13 +1059,12 @@
                         experimentsTableData.push(
                                 {
                                     'plotCheckBox': checkBoxPlot,
-                                    'experimentDescription': expID,
+                                    'experimentDescription': self.barSeqExperimentResultsData.experiments[ i ][0].name_short, //expID, coco
                                     'sickGenes': genesRefs,
                                     'sickGenesLong': sickGenes.length
                                 }
                         );
-                    }
-                    ;
+                    };
                     experimentsTableSettings.aaData = experimentsTableData;
                     tableExperiments = tableExperiments.dataTable(experimentsTableSettings);
 
@@ -1167,25 +1174,20 @@
                     //container.append(self.plotAreaContainer);
                     //document.getElementById('plotareaContainer').insertAdjacentHTML('beforeend', self.plotContainer);
                     //self.d3Plots();
-                    var jpm = $.jPanelMenu();
-                    jpm.openMenu();
-                    jpm.setMenuStyle();
-                    jpm.animated = 1;
 
 
                     //var sPlots = $.scatterPlots( );
                     //sPlots.test = 1;
 
                     self.sPlots = $.scatterPlots( );
-                    self.sPlots.test = 1;
                     self.sPlots.sData = self.plotData;
-                    console.log("Test0:"+self.plotData["dataPointObjs"].length);
+                    //console.log("Test0:"+self.plotData["dataPointObjs"].length);
                
                     container.append(self.sPlots.plotAreaContainer);
                     document.getElementById('plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotContainer);
-                    self.sPlots.d3Plots(self);
-                 
-                });
+                    self.sPlots.d3Plots(self.$elem.width());
+                    $("#plotarea").empty(); //clean allocated area
+                 });
             });
         },
         prepareGenomeFeatures: function (kbws, gnmref) {//self.kbws self.genomeRef 
@@ -1225,7 +1227,14 @@
                 var minV = 999;
                 var maxV = -999;
 
+                //shorten experiment name !!!
+                var t = String( self.barSeqExperimentResultsData.experiments[ iExp ][0].name ).split("|");
+                if(t.length > 0) {
+                    self.barSeqExperimentResultsData.experiments[ iExp ][0].name_short = String( t[ t.length-1 ] ).replace(/_/g, " ");
+                }
+                
                 for (var i = 0; i < experArray.length; i++) {
+                    
                     //typedef tuple<feature_ref f_ref,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
 
                     var geneID = experArray[i][0];
@@ -1268,7 +1277,7 @@
 
                 self.plotData["dataSetObjs"].push(
                         {
-                            "dataSetName": self.barSeqExperimentResultsData.experiments[ iExp ][0].name,
+                            "dataSetName": self.barSeqExperimentResultsData.experiments[ iExp ][0].name_short,
                             "dataSetId": iExp,
                             "dataSetType": "Fitness",
                             "minValue": minV,
@@ -1974,25 +1983,7 @@
 
                     }
                 }
-
-                function cross(arrayA, arrayB) {
-                    var matrixC = [], sizeA = arrayA.length, sizeB = arrayB.length, i, j;
-                    if (hideDiagonal) {
-                        for (i = 0; i < sizeA; i++) {
-                            for (j = i + 1; j < sizeB; j++) {
-                                matrixC.push({x: arrayA[i], i: i, y: arrayB[j], j: j});
-                            }
-                        }
-                    } else {
-                        for (i = -1; ++i < sizeA; ) {
-                            for (j = -1; ++j < sizeB; ) {
-                                matrixC.push({x: arrayA[i], i: i, y: arrayB[j], j: j});
-                            }
-                        }
-                    }
-                    return matrixC;
-                }
-
+                
                 function setDataTablesHover() {
                     $(dataPointsTable.fnGetNodes()).hover(
                             function () {
