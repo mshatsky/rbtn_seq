@@ -34,29 +34,6 @@
             //otherwise dataTables freaks out
             dataPointsTable: 0,
             plotAreaContainer: $('<div id="plotareaContainer"></div>'),
-            /*
-             <script src="http://0.0.0.0:8080/assets/js/DataScatter.js"></script> \
-             <link href="http://0.0.0.0:8080/assets/css/kbase-common.css" rel="stylesheet"> \
-             <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
-             <link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
-             <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
-             <script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
-             
-             <script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
-             <script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
-             <script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
-             <link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
-             <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
-             <link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
-             
-             
-             
-             <div class="container"> \
-             <div class="row"> \
-             </div> \
-             
-             
-             */
             plotContainer: '\
 <link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
 \
@@ -67,65 +44,6 @@
       <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
       </div> \
 ',
-            /*         
-             plotContainer: '\
-             <script src="http://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script> \
-             <script src="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/jquery.dataTables.js"></script> \
-             <script src="http://0.0.0.0:8080/assets/js/d3.v2.js"></script> \
-             <script src="http://0.0.0.0:8080/assets/js/bootstrap.js"></script> \
-             <script src="http://0.0.0.0:8080/assets/js/bootstrapx-clickover.js"></script> \
-             <link type="text/css" href="http://ajax.aspnetcdn.com/ajax/jquery.dataTables/1.9.4/css/jquery.dataTables.css" rel="stylesheet">  \
-             <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"> \
-             <link href="http://0.0.0.0:8080/assets/css/bootstrap-responsive.min.css" rel="stylesheet"> \
-             <link href="http://0.0.0.0:8080/assets/css/identity.css" rel="stylesheet"> \
-             <link type="text/css" rel="stylesheet" href="http://0.0.0.0:8080/assets/css/DataScatter2.css"> \
-             \
-             <div class="container"> \
-             <div class="row"> \
-             <div class="span9"> \
-             <div id="plotarea"> \
-             </div> \
-             </div> \
-             <div class="span3"> \
-             <ul class="nav nav-tabs" id="myTab"> \
-             <li class="active"><a href="#dataSets" data-toggle="tab">Data Sets</a></li> \
-             <li><a href="#dataPointTags" data-toggle="tab">Tags</a></li> \
-             </ul> \
-             <div class="tab-content"> \
-             <div class="tab-pane active" id="dataSets"> \
-             <table id="key" class="accordian"> \
-             </table> \
-             </div> \
-             <div class="tab-pane" id="dataPointTags"> \
-             <form class="form-horizontal"> \
-             <input class="span3" type="text" id="inputTag" placeholder="tag name" data-provide="typeahead" autocomplete="off" onchange="check_tag()"> \
-             <textarea class="span3" rows="3" id="inputTagDataPointNames" placeholder="data point names..."></textarea> \
-             <button id="addTagButton"class="btn btn-primary btn-block" type="button" onclick="addTag()">Add</button> \
-             <table id="tagTable"> \
-             </table> \
-             </div> \
-             </div> \
-             </div> \
-             </div> \
-             \
-             <div class="row"> \
-             <div id="this.dataPointsTableContainer" class="span9"> \
-             <table id="dataPointsTable"> \
-             </table> \
-             </div> \
-             </div> \
-             \
-             <div class="row"> \
-             <div class="span9"> \
-             <div id="table"> \
-             </div> \
-             </div> \
-             </div> \
-             \
-             <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
-             </div> \
-             ',
-             */
             d3Plots: function (widthX) {
 
                 /*
@@ -261,10 +179,40 @@
                         .attr("transform", "translate(" + this.margins.left + "," + this.margins.top + ")")
                         .attr("id", "scatterplot");
 
-                load_tags();
+                //load_tags(); !!!
                 $("#loading").addClass("hidden");
+                
+                //init global gene selection tag
+                var tagName = "globalSelection";
+                this.tags[tagName] = {};
+                this.tags[tagName] = {
+                    "status": 0,
+                    "dataPointNames": []
+                };
+                var color = "#ff4d00";
+                this.activeTags.push({"id": tagName, "color": color});
+                    
 
-
+/*
+                 this.tags["globalSelection"] = 0;
+                
+                    var tagName = "globalSelection";
+                    var taggedDataPointNames = ["Psest_4411","Psest_4410","Psest_3351","Psest_2845"];
+                    
+                    this.tags["globalSelection"] = 0;
+                    this.tags[tagName] = 0;
+                    this.tags[tagName] = {};
+                    
+                    this.tags[tagName] = {
+                        "status": 0,
+                        "dataPointNames": taggedDataPointNames
+                    };
+                    var color = "#ff4d00";
+                    this.activeTags.push({"id": tagName, "color": color});
+                    
+                    console.log("TagAdded Active: " + this.activeTags[0]["id"]);
+                    console.log("TagAdded: " + Object.keys(this.tags).length);
+            */   
 
                 function setDataTablesHover() {
                     /*
@@ -314,6 +262,8 @@
                         $('#addTagButton').html("Add");
                     }
                 }
+            
+               
 
                 /*
                  * addTag()
@@ -419,7 +369,7 @@
                             "<td style='background-color:#c7c7c7'></td>" +
                             "</tr><tr>" +
                             "<td id='colorNone' colspan=4><button class='btn btn-mini btn-block' type='button'>None</button></td>" +
-                            "</tr>"
+                            "</tr>" +
                     "</table>";
 
 
@@ -542,6 +492,36 @@
 
 
             },
+            addPointToTag: function (tagName, pointId){
+                if (undefined === this.tags[tagName]) {
+                    console.log("Error: tag name undefined: " + tagName);
+                    return;
+                }
+             
+                var newPoints = [];
+                var iFound = -1;
+                //check if it is already there, if yes, delete
+                for(var i in this.tags[tagName]["dataPointNames"]){
+                    if(this.tags[tagName]["dataPointNames"][i] === pointId){
+                        iFound = i;
+                    }else{
+                        newPoints.push( this.tags[tagName]["dataPointNames"][i] );
+                    }
+                }
+                
+                if(iFound == -1){
+                    newPoints.push(pointId); //add point
+                }else{
+                    //remove color when point is disselected
+                    d3.selectAll("circle#" + this.tags[tagName]["dataPointNames"][iFound])
+                            .classed("tag_" + tagName, 0);
+                   
+                }
+                
+                this.tags[tagName]["dataPointNames"] = newPoints;  
+                this.color_by_active_tags();
+                console.log("addPointToTag: "+pointId+" : "+iFound+" : "+JSON.stringify(this.tags[tagName]));
+            },
             /*
              * color_by_active_tags() 
              * ----------------------
@@ -552,7 +532,8 @@
 
             color_by_active_tags: function () {
                 for (var i = 0; i < this.activeTags.length; i++) {
-
+                    console.log("TagAct: " + this.activeTags[i]["id"]);
+                    
                     var id = this.activeTags[i]["id"];
                     var color = this.activeTags[i]["color"];
 
@@ -563,6 +544,8 @@
                             .appendTo("head");
 
                     for (var t = 0; t < this.tags[id]["dataPointNames"].length; t++) {
+                        console.log("TagAct Color Points: " + id + " : " + this.tags[id]["dataPointNames"][t]);
+                    
                         d3.selectAll("circle#" + this.tags[id]["dataPointNames"][t])
                                 .classed("tag_" + id, 1)
                                 .moveToFront();
@@ -759,6 +742,9 @@
                             self.dataPointsTable.fnSettings().aoData[ i ].nTr.id = uniquePoints[i];
                         }
                         setDataTablesHover();
+                        
+                        //self.activateBrushPoints();
+             
                     }
 
                 }
@@ -857,13 +843,22 @@
                     //d3.select("#key_square_" + this.selectedSet[i]).style("background", "#99CCFF");
                     //d3.select("#key_count_" + this.selectedSet[i]).text(i + 1);
                 }
+                
+                console.log("TagAdded Active2: " + this.activeTags[0]["id"]);
+                console.log("TagAdded2: " + Object.keys(this.tags).length);
+            
                 setTimeout(this.makePlot(), 1);
                 this.color_by_active_tags();
 
+            
                 //for some reason something gets selected !!!
                 d3.selectAll(".selected").classed("selected", function (d) {
                     return 0;
                 });
+                
+                console.log("TagAdded Active3: " + this.activeTags[0]["id"]);
+                console.log("TagAdded3: " + Object.keys(this.tags).length);
+            
 
             }
         };
@@ -950,13 +945,14 @@
             //container.append('<p>'+"2Width" + container.width());
 
             var barSeqExperimentResultsRef = self.buildObjectIdentity(this.options.workspaceID, this.options.barSeqExperimentResultsID, this.options.barSeqExperimentResultsVer);
+            
             kbws.get_objects([barSeqExperimentResultsRef], function (data) {
 
                 self.barSeqExperimentResultsData = data[0].data;
                 self.genomeRef = self.barSeqExperimentResultsData.genome;
 
                 // Job to get properties of: name and id of the annotated genome
-                var jobGetBarSeqExperimentResultsProperties = kbws.get_object_subset(
+                var jobGetBarSeqExperimentResultsProperties = kbws.get_object_subset( //runs in background
                         [
                             {'ref': self.genomeRef, 'included': ['/id']},
                             {'ref': self.genomeRef, 'included': ['/scientific_name']}
@@ -970,11 +966,7 @@
                         }
                 );
 
-
-
-                
-                console.log("Job0:" + self.genomeFeatures.length);
-                var jobGetGenomeFeatures = kbws.get_object_subset(
+                var jobGetGenomeFeatures = kbws.get_object_subset( //runs in background
                         [{ref: self.genomeRef, included:
                                         ["/features/[*]/aliases",
                                             "/features/[*]/annotations",
@@ -992,9 +984,7 @@
                             self.clientError(error);
                         }
                 );
-                console.log("Job1:" + self.genomeFeatures.length);
-
-
+      
                 //allow sorting for num with html (sType : "num-html")
                 //http://datatables.net/plug-ins/sorting/num-html
                 jQuery.extend(jQuery.fn.dataTableExt.oSort, {
@@ -1007,15 +997,16 @@
                     },
                     "num-html-desc": function (a, b) {
                         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
-                    }
+                    },
+                    "checkbox-custom": function (a) {
+                        var x = a.split("valueChecked = ");
+                        return parseFloat(x[0]);
+                    },
                 });
 
                 // Launch jobs and vizualize data once they are done
                 $.when.apply($, [jobGetBarSeqExperimentResultsProperties,jobGetGenomeFeatures]).done(function () {
                     self.loading(false);
-                    console.log("Job2:" + self.genomeFeatures.length);
-
-                    //self.prepareGenomeFeatures(kbws, self.genomeRef);
                     self.prepareVizData();
                     
                     ///////////////////////////////////// Instantiating Tabs ////////////////////////////////////////////
@@ -1051,12 +1042,12 @@
                         "sPaginationType": "full_numbers",
                         "iDisplayLength": 10,
                         "aaData": [],
-                        "aaSorting": [[1, "desc"]],
+                        "aaSorting": [[0, "desc"],[1, "desc"],[2, "desc"]],
                         "aoColumns": [
-                            {sTitle: "Plot", mData: "plotCheckBox", "bSortable": false},
+                            {sTitle: "Plot", mData: "plotCheckBoxExp", "bSortable": true},
                             {sTitle: "Description", mData: "experimentDescription"},
                             {sTitle: "Sick Genes", mData: "sickGenes", sType: "num-html"},
-                            {sTitle: "Sick Genes Long", mData: "sickGenesLong", bVisible: false, bSearchable: true},
+                            {sTitle: "Sick Genes Long", mData: "sickGenesLong", bVisible: false, bSearchable: true}
                         ],
                         "oLanguage": {
                             "sEmptyTable": "No experiments found!",
@@ -1073,9 +1064,9 @@
                         if (typeof self.experimentToSickGenes[expID] !== 'undefined') {
                             sickGenes = self.experimentToSickGenes[expID];
                         }
-                        var checkBoxPlot = '<input type = "checkbox" class = "checkbox' + self.pref + '"'
+                        var checkBoxPlot = '<input type = "checkbox" class = "checkboxExp' + self.pref + '"'
                                 +
-                                ' value = "' + i + '">'; //sPlot used index wihin the array
+                                ' value = "' + i +'">'; //sPlot used index wihin the array
 
                         // Build reference to sick genes from a particular experiment
                         var genesRefs =
@@ -1086,21 +1077,107 @@
                         // add table data row            
                         experimentsTableData.push(
                                 {
-                                    'plotCheckBox': checkBoxPlot,
+                                    'plotCheckBoxExp': checkBoxPlot,
                                     'experimentDescription': self.barSeqExperimentResultsData.experiments[ i ][0].name_short, //expID, coco
                                     'sickGenes': genesRefs,
                                     'sickGenesLong': sickGenes.length
                                 }
                         );
-                    }
-                    ;
+                    };                    
                     experimentsTableSettings.aaData = experimentsTableData;
                     tableExperiments = tableExperiments.dataTable(experimentsTableSettings);
 
+
+                    //////////////////// Build tab with all genes  ////////////////////////////////////////////     
+                    $.fn.dataTable.ext.order['dom-checkbox'] = function (settings, col)
+                    {
+                        return this.api().column(col, {order: 'index'}).nodes().map(function (td, i) {
+                            return $('input', td).prop('checked') ? '1' : '0';
+                        });
+                    };
+                    
+                    var tabContent = $("<div/>");
+                    tabPane.kbaseTabs('addTab', {tab: 'Genes', content: tabContent, canDelete: false, show: false});
+                    var tableGenes = $('<table class="table table-striped table-bordered" ' +
+                            'style="width: 100%; margin-left: 0px; margin-right: 0px;" id="' + self.pref + 'genes-table"/>');
+                    tabContent.append(tableGenes);
+                    var geneTableSettings = {
+                        "sPaginationType": "full_numbers",
+                        "iDisplayLength": 10,
+                        "aaData": [],
+                        "aaSorting": [[1, "desc"], [2, "asc"]],
+                        "aoColumns": [
+                            {sTitle: "Plot", mData: "plotCheckBoxGene", "bSortable": true, "sType": "checkbox-custom"},
+                            //{sTitle: "Plot", mData: "plotCheckBoxGene", "bSortable": true, "orderDataType": "dom-checkbox"}, 
+                            {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
+                            {sTitle: "Description", mData: "geneDescription"}
+                        ],
+                        "oLanguage": {
+                            "sEmptyTable": "No genes found!",
+                            "sSearch": "Search: "
+                        },
+                        'fnDrawCallback': eventsGeneTab
+                    };
+
+                    var geneTableData = [];
+
+                    for (var gi in self.annotatedGenes) {
+                        var geneIDtoDisplay = self.genomeFeatures[ gi ].id;
+
+                        var geneFunc = self.genomeFeatures[ gi ]['function'];
+                        if (!geneFunc) {
+                            geneFunc = '-';
+                        }
+
+                        var checkBoxPlot = '<input type = "checkbox" class = "checkboxGene' + self.pref + '"'
+                                +
+                                ' value = "' + geneIDtoDisplay + '" valueChecked = 0 >';
+
+                        geneTableData.push({
+                            'plotCheckBoxGene': checkBoxPlot,
+                            'geneID': geneIDtoDisplay,
+                            'geneDescription': geneFunc
+                        });
+                    }
+                    geneTableSettings.aaData = geneTableData;
+                    tableGenes.dataTable(geneTableSettings);
+
+                    function eventsGeneTab() {
+                        console.log("Event Gene triggered: " + $(this).attr('value'));
+                        
+                        //for sorting that uses valueChecked
+                        if($(this).attr('valueChecked') === 0){
+                            $(this).attr('valueChecked',1);
+                        }else{
+                            $(this).attr('valueChecked',0);
+                        }
+                       
+                        var a = '<input type = "checkbox" class = "checkboxGeneX value = Gene valueChecked = 10 >';
+                        var x = a.split("valueChecked = ");
+                        console.log("Test parsing: "+parseFloat(x[0]));
+                       
+                        //action
+                        $('.checkboxGene' + self.pref).unbind('click');
+                        $('.checkboxGene' + self.pref).click(function () {
+                            console.log("Adding point to tag0: " + $(this).attr('value'));
+
+                            self.sPlots.addPointToTag("globalSelection", $(this).attr('value'));
+
+                            //$(this).attr('value')
+                            //if($(this).is(":checked")) {
+                            //    $('#plotareaContainer').append("p").text( "Chekced" + $(this).attr('value') );
+                            //}else{
+                            //    $('#plotareaContainer').append("p").text( "Un Chekced" + $(this).attr('value') );
+                            //}
+                        });
+                    };
+                    
                     ///////////////////////////////////// Experiments Tab Events ////////////////////////////////////////////          
                     function eventsExperimentsTab() {
-                        $('.checkbox' + self.pref).unbind('click');
-                        $('.checkbox' + self.pref).click(function () {
+                        console.log("Event Exp triggered: " + $(this).attr('value'));    
+
+                        $('.checkboxExp' + self.pref).unbind('click');
+                        $('.checkboxExp' + self.pref).click(function () {
                             self.sPlots.set_selected_dataSet(Number($(this).attr('value')));
 
                             //$(this).attr('value')
@@ -1110,8 +1187,7 @@
                             //    $('#plotareaContainer').append("p").text( "Un Chekced" + $(this).attr('value') );
                             //}
                         });
-
-
+                        
                         $('.show-genes' + self.pref).unbind('click');
                         $('.show-genes' + self.pref).click(function () {
 
@@ -1143,12 +1219,12 @@
                                 "aaSorting": [[0, "asc"], [1, "desc"]],
                                 "aoColumns": [
                                     {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
-                                    {sTitle: "Description", mData: "geneDescription"},
+                                    {sTitle: "Description", mData: "geneDescription"}
                                 ],
                                 "oLanguage": {
                                     "sEmptyTable": "No genes found!",
                                     "sSearch": "Search: "
-                                },
+                                }
                                 //'fnDrawCallback': eventsGeneTab
                             };
 
@@ -1164,7 +1240,7 @@
 
                                 geneTableData.push({
                                     'geneID': geneIDtoDisplay,
-                                    'geneDescription': geneFunc,
+                                    'geneDescription': geneFunc
                                 });
                             }
 
@@ -1174,9 +1250,9 @@
 
                         });
                         eventsMoreDescription();
-                    }
-                    ;
-
+                    };
+                    
+                
 
                     //////////////////// Events for Show More/less Description  ////////////////////////////////////////////       
                     function eventsMoreDescription() {
@@ -1218,30 +1294,6 @@
                     $("#plotarea").empty(); //clean allocated area
                 });
             });
-        },
-        prepareGenomeFeatures: function (kbws, gnmref) {//self.kbws self.genomeRef 
-            var self = this;
-            var subsetRequests = [{ref: gnmref, included:
-                            ["/features/[*]/aliases",
-                                "/features/[*]/annotations",
-                                "/features/[*]/function",
-                                "/features/[*]/id",
-                                "/features/[*]/location",
-                                "/features/[*]/protein_translation_length",
-                                "/features/[*]/dna_translation_length",
-                                "/features/[*]/type"]
-                }];
-            console.log("Job0:" + self.genomeFeatures.length);
-            kbws.get_object_subset(subsetRequests,
-                    function (data) {
-                        self.genomeFeatures = data[0].data.features;
-                    },
-                    function (error) {
-                        self.clientError(error);
-                    }
-            );
-            console.log("Job1:" + self.genomeFeatures.length);
-      
         },
         prepareVizData: function () {
             var self = this;
