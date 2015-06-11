@@ -16,7 +16,7 @@
             },
             selectedSet: [],
             maxSelection: 10,
-            hideDiagonal: 1, // toggles between showing a full square and just the upper diagonal
+            hideDiagonal: 0, // toggles between showing a full square and just the upper diagonal
             container_dimensions: {}, //= {width: self.$elem.width() - 120, height: self.$elem.width() - 120};
             margins: {}, //= {top: 60, right: 60, bottom: 60, left: 60};
             chart_dimensions: {},
@@ -998,10 +998,21 @@
                     "num-html-desc": function (a, b) {
                         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
                     },
-                    "checkbox-custom": function (a) {
-                        var x = a.split("valueChecked = ");
-                        return parseFloat(x[0]);
+                    "checkbox-custom-pre": function (a) {
+                        var x = String(a).split("valuechecked = ");
+                        if(parseFloat(x[1]) == 1){
+                            console.log("sorting 1 detected");               
+                        }else{
+                            //console.log("sorting 0 detected: " + x[1] + " : " + x[0]); 
+                        }
+                        return parseFloat(x[1]);
                     },
+                    "checkbox-custom-asc": function (a, b) {
+                        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+                    },
+                    "checkbox-custom-desc": function (a, b) {
+                        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+                    }
                 });
 
                 // Launch jobs and vizualize data once they are done
@@ -1089,13 +1100,6 @@
 
 
                     //////////////////// Build tab with all genes  ////////////////////////////////////////////     
-                    $.fn.dataTable.ext.order['dom-checkbox'] = function (settings, col)
-                    {
-                        return this.api().column(col, {order: 'index'}).nodes().map(function (td, i) {
-                            return $('input', td).prop('checked') ? '1' : '0';
-                        });
-                    };
-                    
                     var tabContent = $("<div/>");
                     tabPane.kbaseTabs('addTab', {tab: 'Genes', content: tabContent, canDelete: false, show: false});
                     var tableGenes = $('<table class="table table-striped table-bordered" ' +
@@ -1105,9 +1109,9 @@
                         "sPaginationType": "full_numbers",
                         "iDisplayLength": 10,
                         "aaData": [],
-                        "aaSorting": [[1, "desc"], [2, "asc"]],
+                        "aaSorting": [[0, "desc"], [1, "desc"], [2, "asc"]],
                         "aoColumns": [
-                            {sTitle: "Plot", mData: "plotCheckBoxGene", "bSortable": true, "sType": "checkbox-custom"},
+                            {sTitle: "Plot", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
                             //{sTitle: "Plot", mData: "plotCheckBoxGene", "bSortable": true, "orderDataType": "dom-checkbox"}, 
                             {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
                             {sTitle: "Description", mData: "geneDescription"}
@@ -1131,8 +1135,20 @@
 
                         var checkBoxPlot = '<input type = "checkbox" class = "checkboxGene' + self.pref + '"'
                                 +
-                                ' value = "' + geneIDtoDisplay + '" valueChecked = 0 >';
+                                ' value = "' + geneIDtoDisplay + '" valuechecked = 0 >'; //onclick="function(a){this.valuechecked = a.checked;}
+                        
+                        /*$(".checkboxGene" + self.pref).change(function () {
+                            console.log("Event checkbox: " + this.checked);
+                            if ($(this).attr('valuechecked') === 0) {
+                                $(this).attr('valuechecked', 1);
+                            } else {
+                                $(this).attr('valuechecked', 0);
+                            }
 
+                            if (this.checked) {
+                                //Do stuff
+                            }
+                        });*/
                         geneTableData.push({
                             'plotCheckBoxGene': checkBoxPlot,
                             'geneID': geneIDtoDisplay,
@@ -1145,20 +1161,28 @@
                     function eventsGeneTab() {
                         console.log("Event Gene triggered: " + $(this).attr('value'));
                         
-                        //for sorting that uses valueChecked
-                        if($(this).attr('valueChecked') === 0){
-                            $(this).attr('valueChecked',1);
-                        }else{
-                            $(this).attr('valueChecked',0);
-                        }
                        
-                        var a = '<input type = "checkbox" class = "checkboxGeneX value = Gene valueChecked = 10 >';
-                        var x = a.split("valueChecked = ");
-                        console.log("Test parsing: "+parseFloat(x[0]));
+                        var a = '<input type = "checkbox" class = "checkboxGeneX value = Gene valuechecked = 10 >';
+                        var x = a.split("valuechecked = ");
+                        console.log("Test parsing: " +x[0] + " : " + x[1] + " : " + (3+parseFloat(x[1])));
                        
                         //action
                         $('.checkboxGene' + self.pref).unbind('click');
                         $('.checkboxGene' + self.pref).click(function () {
+                            //for sorting that uses valuechecked !!! use (a) a.checked?
+                            if ($(this).attr('valuechecked') === 0) {
+                                $(this).attr('valuechecked', 1);
+                            } else {
+                                $(this).attr('valuechecked', 0);
+                            }
+                       
+                            if(this.checked){
+                                $(this).attr('valuechecked', 1);
+                            }else{
+                                $(this).attr('valuechecked', 0);
+                            }
+                            console.log("Adding point to tag0 checked: " + $(this).attr('valuechecked') + " : " + this.checked);
+
                             console.log("Adding point to tag0: " + $(this).attr('value'));
 
                             self.sPlots.addPointToTag("globalSelection", $(this).attr('value'));
