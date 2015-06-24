@@ -999,19 +999,17 @@
                         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
                     },
                     "checkbox-custom-pre": function (a) {
-                        var x = String(a).split("valuechecked = ");
-                        if(parseFloat(x[1]) == 1){
-                            console.log("sorting 1 detected");               
-                        }else{
-                            //console.log("sorting 0 detected: " + x[1] + " : " + x[0]); 
-                        }
-                        return parseFloat(x[1]);
+                        //get value from ' value = "' + geneIDtoDisplay + '"
+                        var x = String(a).split(" value = ");
+                        x = String(x[1]).split('"');
+                         
+                        return parseFloat($(".checkboxGene"+self.pref + "[value='"+x[1]+"']").attr('valuechecked'));
                     },
                     "checkbox-custom-asc": function (a, b) {
                         return ((a < b) ? -1 : ((a > b) ? 1 : 0));
                     },
                     "checkbox-custom-desc": function (a, b) {
-                        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+                        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
                     }
                 });
 
