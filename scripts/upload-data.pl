@@ -389,9 +389,8 @@ print "Saving data for $gcounter genes\n";
 
 #prepare BarSeqExperimentResults object;
 
-my $name = "test1";
 my $params = {
-    "name" => $name,
+    "name" => $object_name,
     "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
 };
 
@@ -408,7 +407,7 @@ foreach (keys %brseqdata){
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
 my %BrseqRes2objref = ();
-$BrseqRes2objref{ $name } = $params;
+$BrseqRes2objref{ $object_name } = $params;
 createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
 
 exit(0);
