@@ -23,6 +23,12 @@
             padding: 25, // area between cells
             cellAreaMargin: 16, // adds a bit to the min/max range of cell data so that data points aren't on the boarders
 
+            //array of user added functions to call upon brush selection event, it will pass an array of selected ids
+            brushEventSelectCallback: [], 
+            //adds a callback function to be activated upon brush select event
+            addBrushEventSelectCallback: function (fcallback){
+              this.brushEventSelectCallback.push(fcallback);  
+            },
             /*
              * Tag data structure
              */
@@ -44,6 +50,67 @@
       <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
       </div> \
 ',
+            offset: function () {
+                var ele = $("#plotarea");//this[0];
+
+                if (ele && ele.isNode()) {
+                    var offset = {
+                        x: ele._private.position.x,
+                        y: ele._private.position.y
+                    };
+
+                    var parents = ele.parents();
+                    for (var i = 0; i < parents.length; i++) {
+                        var parent = parents[i];
+                        var parentPos = parent._private.position;
+
+                        offset.x += parentPos.x;
+                        offset.y += parentPos.y;
+                    }
+
+                    return offset;
+                }
+            },
+            offset2: function () {
+                var x, y;
+                var offsetLeft = 0;
+                var offsetTop = 0;
+                var n;
+                n = $("#plotarea");//$(this)[0];//this.data.container;
+                // Stop checking scroll past the level of the DOM tree containing document.body. At this point, scroll values do not have the same impact on pageX/pageY.
+                var stopCheckingScroll = false;
+                while (n != null) {
+                    console.log(JSON.stringify(n));
+                    var style = window.getComputedStyle(n);
+                    if (style.getPropertyValue('position').toLowerCase() === 'fixed') {
+                        offsetLeft += n.offsetLeft + window.scrollX;
+                        offsetTop += n.offsetTop + window.scrollY;
+                        n = null; // don't want to check any more parents after position:fixed
+
+
+                    } else if (typeof (n.offsetLeft) == "number") {
+                        // The idea is to add offsetLeft/offsetTop, subtract scrollLeft/scrollTop, ignoring scroll values for elements in DOM tree levels 2 and higher.
+                        offsetLeft += n.offsetLeft;
+                        offsetTop += n.offsetTop;
+                        if (n == document.body || n == document.header) {
+                            stopCheckingScroll = true;
+                        }
+                        if (!stopCheckingScroll) {
+                            offsetLeft -= n.scrollLeft;
+                            offsetTop -= n.scrollTop;
+                        }
+                    }
+
+                    if (n) {
+                        n = n.offsetParent
+                    }
+                    ;
+                }
+
+                // By here, offsetLeft and offsetTop represent the "pageX/pageY" of the top-left corner of the div.
+                return [offsetLeft, offsetTop];
+            },
+
             d3Plots: function (widthX) {
 
                 /*
@@ -730,7 +797,7 @@
                         for (var i in points) {
                             uniquePoints.push(points[i]);
                         }
-
+                        /*
                         self.dataPointsTable.fnClearTable();
                         for (var d in uniquePoints) {
                             var tmp = [uniquePoints[d], self.sData.values[ uniquePoints[d] ].dataPointDesc];
@@ -742,9 +809,13 @@
                             self.dataPointsTable.fnSettings().aoData[ i ].nTr.id = uniquePoints[i];
                         }
                         setDataTablesHover();
-                        
+                        */
                         //self.activateBrushPoints();
              
+                        //callback client functions that were registered to receive selected points
+                        for(var f in self.brushEventSelectCallback){
+                            self.brushEventSelectCallback[ f ](uniquePoints);
+                        }
                     }
 
                 }
@@ -797,8 +868,37 @@
                                 console.log("Event: " + d3.event.pageY + " " + d3.event.pageX);
                                 var p = $('#notebook').offset();
                                 console.log("Notebook: " + p.top + " " + p.left);
-
-                                return $('#tooltip').css("top", (d3.event.pageY - 100) + "px").css("left", (d3.event.pageX - 350) + "px");
+                                //var offset = self.offset();
+                                //console.log(JSON.stringify(offset));
+                                //console.log("Event Offset: " + offset.y + " " + offset.x);
+                                //var offset2 = self.offset2();
+                                //console.log(JSON.stringify(offset2));
+                                //return $('#tooltip').css("top", (d3.event.pageY - offset.y + 15) + "px").css("left", (d3.event.pageX - offset.x - 10) + "px");
+                                
+                                var el = $('#plotarea');
+                                console.log("Plotarea el: "+el.attr('id'));
+                                console.log("Plotarea offset parent el: "+el.offsetParent().attr('id'));
+                                
+                                var posi = {x: 0, y: 0};
+                                var count = 10;
+                                while (el && count>0) {
+                                    count = count -1;
+                                    var o= el.offset(); 
+                                    posi.x += o.left;
+                                    posi.y += o.top;
+                                    el = el.offsetParent();
+                                    console.log("Pos for :" + el.attr('id')+JSON.stringify(posi));
+                                }
+                                console.log("Finale offset: "+JSON.stringify(posi));
+                                
+                                //tooltip uses relative coordinates within  the notebook elem
+                                //[Log] Offset: 1555 0 (kbaseBarSeqExperimentResults.js, line 857)
+                                //[Log] Event: 1866 877 (kbaseBarSeqExperimentResults.js, line 858)
+                                //[Log] Notebook: 73 380 (kbaseBarSeqExperimentResults.js, line 860)
+                                //event - notebook is about right
+                                //return $('#tooltip').css("top", (d3.event.pageY - 100) + "px").css("left", (d3.event.pageX - 350) + "px");
+                                return $('#tooltip').css("top", (d3.event.pageY - p.top + 15) + "px").css("left", (d3.event.pageX - p.left - 10) + "px");
+                                
                                 //var matrix = this.getScreenCTM()
                                 //        .translate(+this.getAttribute("cx"), +this.getAttribute("cy"));
                                 //return $('#tooltip').css("top", (window.pageXOffset + matrix.e + 15) + "px").css("left", (window.pageYOffset + matrix.f - 10) + "px");
@@ -1309,6 +1409,7 @@
                     self.sPlots = $.scatterPlots( );
                     self.sPlots.sData = self.plotData;
                     //console.log("Test0:"+self.plotData["dataPointObjs"].length);
+                    self.sPlots.addBrushEventSelectCallback(function(points){ console.log("BrushEvent0"); console.log(JSON.stringify(points)); });
 
                     container.append(self.sPlots.plotAreaContainer);
                     document.getElementById('plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotContainer);
