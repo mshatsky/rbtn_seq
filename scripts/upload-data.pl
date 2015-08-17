@@ -226,7 +226,8 @@ foreach (@meta){
     $Grwth2objref{ $l[$ExpNameIndex] } = $growthobj;
 }
 
-createObjectsForMissingRefs($serv, $workspace, \%Grwth2objref);
+#we don't create GrowthParameters objects in ws anymore
+#createObjectsForMissingRefs($serv, $workspace, \%Grwth2objref);
 
 #####################################################
 #make a third pass and build BarSeqExpr objs
@@ -254,7 +255,7 @@ foreach (@meta){
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Date_pool_expt_started') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Sequenced.At') ],
-	$Grwth2objref{ $l[$ExpNameIndex] },
+	$Grwth2objref{ $l[$ExpNameIndex] }->{data},
 	[ @conds ]
 	);
     

@@ -168,7 +168,7 @@ typedef structure {
     pool_ref pool;
     string start_date;
     string sequenced_at;
-    growth_parameters_ref growth_parameters;
+    GrowthParameters growth_parameters;
 } TnSeqExperiment;
 
 /*
@@ -226,8 +226,8 @@ typedef structure {
     string mutant_lib_name;
     string start_date;
     string sequenced_at;
-    growth_parameters_ref growth_parameters;
-    list<Condition cond> conditions;
+    GrowthParameters growth_parameters;
+    list<Condition> conditions;
     tnseq_library_ref tnseq_library;
 } BarSeqExperiment;
 
