@@ -109,22 +109,6 @@ if ( scalar(@$output)>0 ) {
     }
 }
 
-#####################################################
-#get existing Conditions objects in WS to save creating 
-#new versions for the same thing.
-#####################################################
-my %Cond2objref = ();
-
-$output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseRBTnSeq.Condition"} );
-
-if ( scalar(@$output)>0 ) {
-    foreach my $object_info (@$output) {
-	#---
-	print  "Existing objects in ws: ".$object_info->[1]."\n";
-	$Cond2objref{ $object_info->[1] } = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
-    }
-}
-
 
 #####################################################
 #read in file with metadata
@@ -250,8 +234,9 @@ foreach (@meta){
     my @l = split /\t/, $_;
 
     my @conds = ();
-    push @conds, $Cond2objref{ $Exprname2cond1Name{ $l[$ExpNameIndex] } } if exists $Exprname2cond1Name{ $l[$ExpNameIndex] };
-    push @conds, $Cond2objref{ $Exprname2cond2Name{ $l[$ExpNameIndex] } } if exists $Exprname2cond2Name{ $l[$ExpNameIndex] };
+    #we don't create Condition object anymore in ws (too many)
+    push @conds, $Cond2objref{ $Exprname2cond1Name{ $l[$ExpNameIndex] } }->{"data"} if exists $Exprname2cond1Name{ $l[$ExpNameIndex] };
+    push @conds, $Cond2objref{ $Exprname2cond2Name{ $l[$ExpNameIndex] } }->{"data"} if exists $Exprname2cond2Name{ $l[$ExpNameIndex] };
    
     my $brseqname = formKBname( 
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
