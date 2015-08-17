@@ -21,7 +21,7 @@
  * This widget is first started as a spin off the d3 scatterplot example by Mike Bostock. 
  * http://bl.ocks.org/mbostock/4063663
  * then adopted by Paramvir Dehal and turned to support multiple scatterplots 
- * and finally revised by Max Shatsky to be a standalone widget.
+ * and finally revised by Max Shatsky to be a standalone widget within KBase.
  */
 
     
@@ -58,11 +58,13 @@
             plotAreaContainer: $('<div id="'+ pref + 'plotareaContainer"></div>'),
             plotHeader: '\
 <style type="text/css"> \
+/* box created by a cursor (brush.extent()) that selects points within a cell */ \
 rect.extent { \
         fill: #000; \
         fill-opacity: .125; \
         stroke: #fff; \
 } \
+/* frame of a cell (plot) */ \
 rect.frame { \
         fill:#fff; \
         stroke: #aaa; \
@@ -85,7 +87,7 @@ circle { \
         fill-opacity: .75; \
         stroke: none; \
 } \
-.selected { \
+.spselected { \
         fill-opacity: .5; \
         stroke: #800; \
         stroke-width: 2; \
@@ -222,6 +224,7 @@ circle { \
                     
 
             },
+            
             addPointToTag: function (tagName, pointId){
                 if (undefined === this.tags[tagName]) {
                     console.log("Error: tag name undefined: " + tagName);
@@ -409,7 +412,8 @@ circle { \
                             return self.sData.dataSetObjs[d.y].dataSetName;
                         });
 
-
+                var circles = scatterplot.selectAll("circle");
+                
                 function brushstart(p) {
                     if (brush.data !== p) {
                         cell.call(brush.clear());
@@ -421,7 +425,8 @@ circle { \
                     var e = brush.extent(); //2d array of x,y coords for select rectangle
 
                     //can get a speed up by just selecting the circles from the cell
-                    scatterplot.selectAll("circle").classed("selected", function (d) {
+                    //scatterplot.selectAll("circle").classed("spselected", function (d) {
+                    circles.classed("spselected", function (d) {
                         if (e[0][0] <= self.sData.values[d.dataPointName][p.x] && self.sData.values[d.dataPointName][p.x] <= e[1][0]
                                 && e[0][1] <= self.sData.values[d.dataPointName][p.y] && self.sData.values[d.dataPointName][p.y] <= e[1][1]) {
 
@@ -439,16 +444,22 @@ circle { \
                     var points = [];
                     var nTrArray = [];
                     if (brush.empty()) {
-                        scatterplot.selectAll("circle").classed("selected", 0);                        
+                        //scatterplot.selectAll("circle").classed("spselected", 0);                        
+                        circles.classed("spselected", 0);                        
                     }
                     else {
-                        d3.select('#'+this.pref+'plotareaContainer').selectAll(".selected").classed("selected", function (d) {
+                        scatterplot.selectAll(".spselected").classed("spselected", function (d) {
                             points[d.dataPointName] = d.dataPointName;
                             return 1;
                         }).moveToFront();
+                        
+                        console.log("Brush end obj: "+self.pref);
+                        console.log(JSON.stringify(points));
+                        
                         for (var i in points) {
                             uniquePoints.push(points[i]);
                         }
+                        console.log(JSON.stringify(uniquePoints));
                         
                         //callback client functions that were registered to receive selected points
                         for(var f in self.brushEventSelectCallback){
@@ -460,6 +471,7 @@ circle { \
             
                 function plotCell(cellData) {
                     var cell = d3.select(this);
+                    console.log("Plotcell: "+JSON.stringify(cell));
                     cell.append("rect")
                             .attr("class", "frame")
                             .attr("x", self.padding / 2)
@@ -592,7 +604,7 @@ circle { \
                 //for some reason something gets selected !!!
                 //select('#'+this.pref+'plotareaContainer')
                 //change .selected to some other name
-                d3.select('#'+this.pref+'plotareaContainer').selectAll(".selected").classed("selected", function (d) {
+                d3.select('#'+this.pref+'plotareaContainer').selectAll(".spselected").classed("spselected", function (d) {
                     return 0;
                 });
                 
@@ -681,7 +693,7 @@ circle { \
         },
         render: function () {
             var self = this;
-            self.pref = this.uuid() + "-";
+            self.pref = "pc"+this.uuid() + "-";
             self.loading(true);
 
             console.log("Length of experiments :" + self.experiments.length);
@@ -1068,8 +1080,8 @@ circle { \
                             });
 
                     container.append(self.sPlots.plotAreaContainer);
-                    console.log(self.sPlots.plotAreaContainer);
                     document.getElementById(self.pref+'plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotHeader);
+                    console.log("Width: " + self.$elem.width());                    
                     self.sPlots.d3Plots(self.$elem.width());
                     $('#'+self.pref+'plotareaContainer').find("#plotarea").empty(); //clean allocated area
                 });
