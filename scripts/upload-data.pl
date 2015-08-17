@@ -128,6 +128,7 @@ my $MediaIndex = getIndexOfElemExactMatch(\@header, 'Media');
 my %Exprname2cond1Name = ();
 my %Exprname2cond2Name = ();
 my %Exprname2mediaName = ();
+my %Cond2objref = ();
 
 my @meta = (); #store all lines from the file for the following passes
 while(<FILE>){
@@ -176,10 +177,12 @@ while(<FILE>){
 close FILE;
 
 
+/* we don't create Condition objects in ws anymore
 #####################################################
 #create Condition objs in ws
 #####################################################
 createObjectsForMissingRefs($serv, $workspace, \%Cond2objref);
+*/
 
 #####################################################
 #create Media objs in ws
@@ -235,8 +238,8 @@ foreach (@meta){
 
     my @conds = ();
     #we don't create Condition object anymore in ws (too many)
-    push @conds, $Cond2objref{ $Exprname2cond1Name{ $l[$ExpNameIndex] } }->{"data"} if exists $Exprname2cond1Name{ $l[$ExpNameIndex] };
-    push @conds, $Cond2objref{ $Exprname2cond2Name{ $l[$ExpNameIndex] } }->{"data"} if exists $Exprname2cond2Name{ $l[$ExpNameIndex] };
+    push @conds, $Cond2objref{ $Exprname2cond1Name{ $l[$ExpNameIndex] } }->{data} if exists $Exprname2cond1Name{ $l[$ExpNameIndex] };
+    push @conds, $Cond2objref{ $Exprname2cond2Name{ $l[$ExpNameIndex] } }->{data} if exists $Exprname2cond2Name{ $l[$ExpNameIndex] };
    
     my $brseqname = formKBname( 
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
