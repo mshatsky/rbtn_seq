@@ -1,6 +1,6 @@
 /*
 This module is for storing microbial growth phenotype data, e.g., from
-FEBA or ENIGMA
+FEBA project or other ENIGMA experiments
 */
 
 module KBaseRBTnSeq {
@@ -227,7 +227,7 @@ typedef structure {
     string start_date;
     string sequenced_at;
     growth_parameters_ref growth_parameters;
-    list<condition_ref> conditions;
+    list<Condition cond> conditions;
     tnseq_library_ref tnseq_library;
 } BarSeqExperiment;
 
