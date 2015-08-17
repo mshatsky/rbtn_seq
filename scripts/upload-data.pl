@@ -177,12 +177,12 @@ while(<FILE>){
 close FILE;
 
 
-/* we don't create Condition objects in ws anymore
 #####################################################
 #create Condition objs in ws
 #####################################################
-createObjectsForMissingRefs($serv, $workspace, \%Cond2objref);
-*/
+#we don't create Condition objects in ws anymore
+#createObjectsForMissingRefs($serv, $workspace, \%Cond2objref);
+
 
 #####################################################
 #create Media objs in ws
