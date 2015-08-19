@@ -216,7 +216,8 @@ typedef string tnseq_library_ref;
 /*
   A BarSeqExperiment is an experiment in which a pool is grown in
   several parallel aliquots (e.g., wells or tubes), each potentially
-  treated with a different set of conditions
+  treated with a different set of conditions (but usually it is just one
+  Condition)
   BarSeqExperiment object represents only one such condition
 @optional person mutant_lib_name tnseq_library
 */
@@ -227,7 +228,7 @@ typedef structure {
     string start_date;
     string sequenced_at;
     GrowthParameters growth_parameters;
-    list<Condition> conditions;
+    list<Condition> conditions; /* usually one or two conditions */
     tnseq_library_ref tnseq_library;
 } BarSeqExperiment;
 
@@ -250,7 +251,7 @@ typedef tuple<int feature_index,int strain_index,int count_begin,int count_end,f
 
 /*
  A single (i.e. one condition) BarSeq experiment
- barseq_experiment_ref - describes the experiment
+ experiment - describes the BarSeq experiment
  bar_seq_result - list of counts. Can be per gene or per strain.
 */
 typedef tuple<BarSeqExperiment experiment, list< bar_seq_result > results> bar_seq_exp;
@@ -259,7 +260,9 @@ typedef tuple<BarSeqExperiment experiment, list< bar_seq_result > results> bar_s
   BarSeqExperimentResults stores the log ratios calculated from
   a BarSeqExperiment.  There is one log ratio per strain or per gene per
   GrowthParameters.
-  May contain a number of BarSeqExperiment done on same species.
+  May contain a number of BarSeqExperiment done on same species (i.e. 
+  usually it would be dozens and even more than a hundred barseq experiments 
+  performed under various conditions starting from a the same library).
 */
 typedef structure {
     genome_ref genome;
