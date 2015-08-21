@@ -45,13 +45,12 @@ my $output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KB
 
 if ( scalar(@$output)>0 ) {
     foreach my $object_info (@$output) {
-	#---
-	print  "Existing objects in ws: ".$object_info->[1]."\n";
+	#---print  "Existing objects in ws: ".$object_info->[1]."\n";
 	$genome_ref = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4]
 	    if ($object_info->[1] eq  $genome_name);
     }
 }
-print "Ref: $genome_ref\n";
+#print "Ref: $genome_ref\n";
 
 
 #get genome object
@@ -83,8 +82,7 @@ for(my $i=0; $i< scalar(@{$genome->{data}->{features}}); ++$i){
 	#print "F ".$f->{id}." type : ".$f->{type}."\n"; 
 	my @aliases = @{$f->{aliases}};
 	foreach(@aliases){
-	    #
-	    print "alias: $_ -> ".$f->{id}."\n";
+	    #print "alias: $_ -> ".$f->{id}."\n";
 	    $Aliases2FeatID{ $_ } = $f->{id};
 	}
 	$FeatIndex2id->{ $i } = $f->{id};
@@ -99,12 +97,11 @@ for(my $i=0; $i< scalar(@{$genome->{data}->{features}}); ++$i){
 #####################################################
 my %Media2objref = ();
 
-my $output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseBiochem.Media"} );
+$output = $serv->list_objects( {"workspaces" => [($workspace)], "type" => "KBaseBiochem.Media"} );
 
 if ( scalar(@$output)>0 ) {
     foreach my $object_info (@$output) {
-	#---
-	print  "Existing objects in ws: ".$object_info->[1]."\n";
+	#---print  "Existing Media objects in ws: ".$object_info->[1]."\n";
 	$Media2objref{ $object_info->[1] } = $object_info->[6]."/".$object_info->[0]."/".$object_info->[4];
     }
 }
@@ -347,7 +344,9 @@ foreach (@headerData){
 
 for(my $i=4; $i<= $#headerData; ++$i){
     die "Experiment ".$headerData[$i]." is not in meta file\n" if !exists $Barseq2objref{ $headerData[$i] };
-    my ($shortname) = split /|/,  $Barseq2objref{ $headerData[$i] }{name};
+    my @t = split /\|/,  $Barseq2objref{ $headerData[$i] }{name};
+    my $shortname = $t[ $#t ];
+    $shortname =~ s/_/ /g;
 
     #short names can be non unique, add index
     if(exists $BarseqShortName2long{ $shortname }){
@@ -357,10 +356,10 @@ for(my $i=4; $i<= $#headerData; ++$i){
 	}
 	$shortname = $shortname."$counter";
     }
-    print "Test: name : ", $Barseq2objref{ $headerData[$i] }{name}, " : ", $shortname, "\n";
+    #print "Test: name : ", $Barseq2objref{ $headerData[$i] }{name}, " : ", $shortname, "\n";
     $BarseqLongName2short{ $Barseq2objref{ $headerData[$i] }{name} } = $shortname;
     $BarseqShortName2long{ $shortname } = $Barseq2objref{ $headerData[$i] }{name};
-    push @{$matrix2D{ "col_ids" }}, $shortname;#$headerData[$i];
+    push @{$matrix2D->{ "col_ids" }}, $shortname;#$headerData[$i];
 }
 #foreach (@headerData){
 #    print "test: $_\n";
@@ -380,7 +379,10 @@ while(<FILE>){
     
     my ($locusId, $sysName, $desc, $comb, @lratios) = @l;
 
-    #next if !exists $Aliases2FeatID{ $sysName }; #!!!!!
+    print STDERR "Error: $sysName not found in genome $genome_name. Skipping this gene.\n"
+	if !exists $Aliases2FeatID{ $sysName };
+
+    next if !exists $Aliases2FeatID{ $sysName }; #!!!!!
     die "Error: $sysName not found in genome $genome_name\n"
         if !exists $Aliases2FeatID{ $sysName };
      die "Error: alias ".$Aliases2FeatID{ $sysName }."for $sysName not found in genome $genome_name\n"
@@ -398,9 +400,9 @@ while(<FILE>){
 	push @{$barseqdata{ $headerData[ $i + 4 ] }}, [ @res ];	
     }
 
-    push @{$matrix2D{ "values" }}, [ @lratios ];
-    push @{$matrix2D{ "row_ids" }}, $Aliases2FeatID{ $sysName };
-    $row_to_index{ $Aliases2FeatID{ $sysName } } = $feat_index;
+    push @{$matrix2D->{ "values" }}, [ @lratios ];
+    push @{$matrix2D->{ "row_ids" }}, $Aliases2FeatID{ $sysName };
+    $row_to_index->{ $Aliases2FeatID{ $sysName } } = $feat_index;
 }
 close FILE;
 print "Saving data for $gcounter genes\n";
@@ -419,17 +421,16 @@ $params->{data}->{col_to_index}  = {};
 $params->{data}->{row_to_index}  = $row_to_index;
 
 #fill in experiment field
-print "Start filling in BarSeqResults object\n";
+#print "Start filling in BarSeqResults object\n";
 foreach (keys %barseqdata){
-    print "test: $_ : ", $Barseq2objref{ $_ }->{data}->{name},"\n";
     push @{ $params->{data}->{experiments} }, [(  $Barseq2objref{ $_ }->{data} , $barseqdata{ $_ } )];
 
-    $params->{data}->{col_to_index}{ 
-	                             $BarseqLongName2short{ $Barseq2objref{ $_ }->{data}->{name} } 
-                                   } = $#{ $params->{data}->{experiments} };
+    $params->{data}->{col_to_index}->{ 
+	                               $BarseqLongName2short{ $Barseq2objref{ $_ }->{data}->{name} } 
+                                     } = $#{ $params->{data}->{experiments} };
 }
 
-print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
+#print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
 my %BarseqRes2objref = ();
 $BarseqRes2objref{ $object_name } = $params;
 createObjectsForMissingRefs($serv, $workspace, \%BarseqRes2objref);
@@ -567,7 +568,7 @@ sub createGrowthParamsObj($$$$$$$$$$$$$$$$$$){
     $params->{data}->{endOD} = $_[16]+0   if $_[16] !~ 'NA' and $_[16]>0;
     $params->{data}->{total_generations} = $_[17]+0 if $_[17] !~ 'NA' and $_[17]>0;
     
-    print "Ref to media obj:".$params->{data}->{media}.":\n";
+    #print "Ref to media obj:".$params->{data}->{media}.":\n";
     return $params;
 }
 

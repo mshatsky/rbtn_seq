@@ -1,3 +1,5 @@
+#include <KBaseFeatureValues.spec>
+
 /*
 This module is for storing microbial growth phenotype data, e.g., from
 FEBA project or other ENIGMA experiments
