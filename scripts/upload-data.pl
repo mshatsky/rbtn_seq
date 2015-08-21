@@ -232,17 +232,17 @@ foreach (@meta){
 #####################################################
 #make a third pass and build BarSeqExpr objs
 #####################################################
-my %Brseq2objref = ();
+my %Barseq2objref = ();
 
 foreach (@meta){
     my @l = split /\t/, $_;
 
     my @conds = ();
-    #we don't create Condition object anymore in ws (too many)
+
     push @conds, $Cond2objref{ $Exprname2cond1Name{ $l[$ExpNameIndex] } }->{data} if exists $Exprname2cond1Name{ $l[$ExpNameIndex] };
     push @conds, $Cond2objref{ $Exprname2cond2Name{ $l[$ExpNameIndex] } }->{data} if exists $Exprname2cond2Name{ $l[$ExpNameIndex] };
    
-    my $brseqname = formKBname( 
+    my $barseqname = formKBname( 
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
 	$l[$ExpNameIndex],
 	$l[ getIndexOfElemExactMatch(\@header, 'Description') ]
@@ -250,7 +250,7 @@ foreach (@meta){
 
     #create BarSeqExperiment obj
     my $barseqobj = createBarSeqExperimentObject(
-	$brseqname, 
+	$barseqname, 
 	$l[ getIndexOfElemExactMatch(\@header, 'Person') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Mutant.Library') ],
 	$l[ getIndexOfElemExactMatch(\@header, 'Date_pool_expt_started') ],
@@ -260,16 +260,16 @@ foreach (@meta){
 	);
     
     die "Two BarSeq experiments with the same name : ".$l[$ExpNameIndex]."\n" if
-        exists $Brseq2objref{ $l[$ExpNameIndex] };
+        exists $Barseq2objref{ $l[$ExpNameIndex] };
 
-    $Brseq2objref{ $l[$ExpNameIndex] } = $barseqobj;
+    $Barseq2objref{ $l[$ExpNameIndex] } = $barseqobj;
     #for(my $i=0; $i<= $#l; ++$i){
 #	$meta{ $l[$ExpNameIndex] }{ $header[$i] } = $l[ $i ];	
  #   }
 }
 
 #we don't create these objects in ws anymore, too many
-#createObjectsForMissingRefs($serv, $workspace, \%Brseq2objref);
+#createObjectsForMissingRefs($serv, $workspace, \%Barseq2objref);
 
 
 
@@ -308,13 +308,13 @@ foreach (@meta){
 # };
 
 # $params->{data}->{genome} = $genome_ref;
-# $params->{data}->{experiments} = [ ( [( $Brseq2objref{ (keys %Brseq2objref)[0] }, [ ($elem) ] )]   )]; 
+# $params->{data}->{experiments} = [ ( [( $Barseq2objref{ (keys %Barseq2objref)[0] }, [ ($elem) ] )]   )]; 
 # $params->{data}->{feature_index_to_id} = $FeatIndex2id; 
 
 # print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
-# my %BrseqRes2objref = ();
-# $BrseqRes2objref{ $name } = $params;
-# createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
+# my %BarseqRes2objref = ();
+# $BarseqRes2objref{ $name } = $params;
+# createObjectsForMissingRefs($serv, $workspace, \%BarseqRes2objref);
 
 
 
@@ -322,6 +322,17 @@ foreach (@meta){
 #####################################################
 #readin file with log ratios
 ##################################################### 
+
+#FloatMatrix2D object
+my $matrix2D = { 
+    "row_ids" => [],
+    "col_ids" => [],
+    "values"  => []
+};
+my %BarseqLongName2short = ();
+my %BarseqShortName2long = ();
+my $row_to_index = {};
+
 my %data = ();
 open FILE, $FNM_LOGRT or die $!;
 
@@ -335,7 +346,21 @@ foreach (@headerData){
 }
 
 for(my $i=4; $i<= $#headerData; ++$i){
-    die "Experiment ".$headerData[$i]." is not in meta file\n" if !exists $Brseq2objref{ $headerData[$i] };
+    die "Experiment ".$headerData[$i]." is not in meta file\n" if !exists $Barseq2objref{ $headerData[$i] };
+    my ($shortname) = split /|/,  $Barseq2objref{ $headerData[$i] }{name};
+
+    #short names can be non unique, add index
+    if(exists $BarseqShortName2long{ $shortname }){
+	my $counter = 2;
+	while( exists $BarseqShortName2long{ $shortname."$counter" } ){
+	    ++$counter;
+	}
+	$shortname = $shortname."$counter";
+    }
+    print "Test: name : ", $Barseq2objref{ $headerData[$i] }{name}, " : ", $shortname, "\n";
+    $BarseqLongName2short{ $Barseq2objref{ $headerData[$i] }{name} } = $shortname;
+    $BarseqShortName2long{ $shortname } = $Barseq2objref{ $headerData[$i] }{name};
+    push @{$matrix2D{ "col_ids" }}, $shortname;#$headerData[$i];
 }
 #foreach (@headerData){
 #    print "test: $_\n";
@@ -343,8 +368,9 @@ for(my $i=4; $i<= $#headerData; ++$i){
 #}
 
 
-my %brseqdata=(); #hash of barseq_experiment_ref -> ref to list< bar_seq_result >
+my %barseqdata=(); #hash of barseq_experiment_ref -> ref to list< bar_seq_result >
 my $gcounter = 0;
+
 
 while(<FILE>){
     chomp;
@@ -354,30 +380,32 @@ while(<FILE>){
     
     my ($locusId, $sysName, $desc, $comb, @lratios) = @l;
 
-    next if !exists $Aliases2FeatID{ $sysName }; #!!!!!
+    #next if !exists $Aliases2FeatID{ $sysName }; #!!!!!
     die "Error: $sysName not found in genome $genome_name\n"
         if !exists $Aliases2FeatID{ $sysName };
      die "Error: alias ".$Aliases2FeatID{ $sysName }."for $sysName not found in genome $genome_name\n"
         if !exists $FeatID2index{ $Aliases2FeatID{ $sysName } };
 
+    my $feat_index=int($FeatID2index{ $Aliases2FeatID{ $sysName } });
+
     ++$gcounter;
     for(my $i=0; $i<= $#lratios; ++$i){
-	
-	my $feat_index=int($FeatID2index{ $Aliases2FeatID{ $sysName } });
-	
 	#fill in data
 	#typedef tuple<int feature_index,int strain_index,int count_begin,int count_end,float norm_log_ratio> bar_seq_result;
 	#typedef tuple<barseq_experiment_ref experiment, bar_seq_result results> bar_seq_exp;
 
 	my @res = ($feat_index, 0,0,0,0+$lratios[ $i ]);
-	push @{$brseqdata{ $headerData[ $i + 4 ] }}, [ @res ];	
+	push @{$barseqdata{ $headerData[ $i + 4 ] }}, [ @res ];	
     }
+
+    push @{$matrix2D{ "values" }}, [ @lratios ];
+    push @{$matrix2D{ "row_ids" }}, $Aliases2FeatID{ $sysName };
+    $row_to_index{ $Aliases2FeatID{ $sysName } } = $feat_index;
 }
 close FILE;
 print "Saving data for $gcounter genes\n";
 
 #prepare BarSeqExperimentResults object;
-
 my $params = {
     "name" => $object_name,
     "type" => "KBaseRBTnSeq.BarSeqExperimentResults",
@@ -386,105 +414,33 @@ my $params = {
 $params->{data}->{genome} = $genome_ref;
 $params->{data}->{feature_index_to_id} = $FeatIndex2id; 
 $params->{data}->{experiments}  = [];
+$params->{data}->{features_by_experiments}  = $matrix2D;
+$params->{data}->{col_to_index}  = {};
+$params->{data}->{row_to_index}  = $row_to_index;
 
 #fill in experiment field
 print "Start filling in BarSeqResults object\n";
-foreach (keys %brseqdata){
-    print "test: $_ : ", $Brseq2objref{ $_ }->{data}->{name},"\n";
-    push @{ $params->{data}->{experiments} }, [(  $Brseq2objref{ $_ }->{data} , $brseqdata{ $_ } )];
+foreach (keys %barseqdata){
+    print "test: $_ : ", $Barseq2objref{ $_ }->{data}->{name},"\n";
+    push @{ $params->{data}->{experiments} }, [(  $Barseq2objref{ $_ }->{data} , $barseqdata{ $_ } )];
+
+    $params->{data}->{col_to_index}{ 
+	                             $BarseqLongName2short{ $Barseq2objref{ $_ }->{data}->{name} } 
+                                   } = $#{ $params->{data}->{experiments} };
 }
 
 print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
-my %BrseqRes2objref = ();
-$BrseqRes2objref{ $object_name } = $params;
-createObjectsForMissingRefs($serv, $workspace, \%BrseqRes2objref);
+my %BarseqRes2objref = ();
+$BarseqRes2objref{ $object_name } = $params;
+createObjectsForMissingRefs($serv, $workspace, \%BarseqRes2objref);
 
 exit(0);
 
 
 
-
-
-
-
-###################################################
-my $params = {
-       "id" => $object_name,
-       "type" => "KBaseRBTnSeq.BarSeqExperimentResults-0.1",
-       workspace => $workspace,
-       metadata => ""
-};
-
-#try the first one
-$params->{data} = $brseqdata{  $headerData[4] };
-
-print "T: ", $params->{data}->{experiment}, "\n";
-#print "T: ", $params->{data}->{results}->[0]->[0], " ", $params->{data}->{results}->[0]->[3], "\n";
-#print "T: ", $params->{data}->{results}->[9]->[0], " ", $params->{data}->{results}->[9]->[3], "\n";
-
-###################################################
-
-#lookup version number of WS Service that will be loading the data
-my $ws_ver = '';
-eval { $ws_ver = $serv->ver(); };
-if($@) {
-    print "Object could not be saved! Error connecting to the WS server.\n";
-    print STDERR $@->{message}."\n";
-    if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
-    print STDERR "\n";
-    exit 1;
-}
-
-# set provenance info
-my $PA = {
-                "service"=>"Workspace",
-                "service_ver"=>$ws_ver,
-                "script"=>"upload-data.pl",
-                "script_command_line"=> "@ARGV"
-          };
-$params->{provenance} = [ $PA ];
-
-
-# setup the new save_objects parameters
-my $saveObjectsParams = {
-                "objects" => [
-                           {
-                                "data"  => $params->{data},
-                                "name"  => $params->{id},
-                                "type"  => $params->{type},
-                                #"meta"  => $params->{metadata},
-                                "provenance" => $params->{provenance}
-                           }
-                        ]
-        };
-if ($params->{workspace} =~ /^\d+$/ ) { #is ID
-        $saveObjectsParams->{id}=$workspace+0;
-} else { #is name
-        $saveObjectsParams->{workspace}=$workspace;
-}
-
-#Calling the server
-my $output;
-eval { $output = $serv->save_objects($saveObjectsParams); };
-if($@) {
-    print "Object could not be saved!\n";
-    print STDERR $@->{message}."\n";
-    if(defined($@->{status_line})) {print STDERR $@->{status_line}."\n" };
-    print STDERR "\n";
-    exit 1;
-}
-
-#Report the results
-print "Object saved.  Details:\n";
-if (scalar(@$output)>0) {
-        foreach my $object_info (@$output) {
-                printObjectInfo($object_info);
-        }
-} else {
-        print "No details returned!\n";
-}
-print "\n";
-exit(0);
+###########################################################
+# functions
+###########################################################
 
 #join array of strings into one string and subs 
 #illegal chars with something else

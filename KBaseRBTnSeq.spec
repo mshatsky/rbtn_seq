@@ -254,11 +254,25 @@ typedef tuple<BarSeqExperiment experiment, list< bar_seq_result > results> bar_s
   May contain a number of BarSeqExperiment done on same species (i.e. 
   usually it would be dozens and even more than a hundred barseq experiments 
   performed under various conditions starting from a the same library).
+
+  The raw data, including start/end mutant counts, is stored in:
+     list<bar_seq_exp> experiments
+  It does not require to have values for all genes/loci and the number of features does not have 
+  to be the same for all experiments.
+
+  features_by_experiments - is a 2D matrix that contains only normalized log ratios from experiments[*]['results' = 1][*]['norm_log_ratio' = 5 ]
+  Therefore, there is a redundancy, we store log ratios twice. 'experiments' is used to store all raw data and allows quickly retrieve a single condition. 
+  'features_by_experiments' is used to support visualization widgets and other methods that work with KBaseFeatureValues.FloatMatrix2D. 
+  It also allows to quickly retrieve log ratios for all conditions per gene.
 */
 typedef structure {
     genome_ref genome;
     mapping<int feature_index, string feature_id> feature_index_to_id;
     list<bar_seq_exp> experiments;
+
+    KBaseFeatureValues.FloatMatrix2D features_by_experiments;    
+    mapping<string, int> col_to_index; /* column name of 'features_by_experiments' to index within 'experiments' mapping */
+    mapping<string, int> row_to_index; /* row names (usually genes) to feature_index, i.e. reverse of 'feature_index_to_id' */
 } BarSeqExperimentResults;
 
 /*
