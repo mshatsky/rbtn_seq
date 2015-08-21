@@ -159,22 +159,6 @@ typedef structure {
 */
 typedef string growth_parameters_ref;
 
-/*
-  A TnSeqExperiment is an experiment in which a pool of mutants is created 
-  by a transposone mutagenesis.
-*/
-typedef structure {
-    string name;
-    pool_ref pool;
-    string start_date;
-    string sequenced_at;
-    GrowthParameters growth_parameters;
-} TnSeqExperiment;
-
-/*
-@id ws KBaseRBTnSeq.TnSeqExperiment
-*/
-typedef string tnseq_experiment_ref;
 
 /*
   Number of strains determined from sequencing of TnSeq library.
@@ -184,26 +168,33 @@ typedef string tnseq_experiment_ref;
 typedef tuple<int strain_index,int count> tnseq_result;
 
 /*
-  TnSeqExperimentResults stores the results of sequencing of a TnSeq experiment, i.e. 
-  number of times each mutant strain is detetcted from sequencing.
+  A TnSeqExperiment is an experiment in which a pool of mutants is created 
+  by a transposone mutagenesis.
+  It stores the results of sequencing of a TnSeq experiment, i.e. 
+  number of times each mutant strain is detected by sequencing.
+*/
+typedef structure {
+    string name;
+    pool_ref pool;
+    string start_date;
+    string sequenced_at;
+    GrowthParameters growth_parameters;
+    list<tnseq_result> results;
+} TnSeqExperiment;
+
+/*
+@id ws KBaseRBTnSeq.TnSeqExperiment
+*/
+typedef string tnseq_experiment_ref;
+
+
+/*
+  TnSeqLibrary is a filtered subset of strains from TnSeqExperiment that is 
+  suitable for the subsequent analysis of BarSeq experiments.
+  list<int tnseq_results_index> selected_lib - index to TnSeqExperiment.results
 */
 typedef structure {
     tnseq_experiment_ref experiment;
-    list<tnseq_result> results;
-} TnSeqExperimentResults;
-
-/*
-@id ws KBaseRBTnSeq.TnSeqExperimentResults
-*/
-typedef string tnseq_experiment_results_ref;
-
-/*
-  TnSeqLibrary is a filtered subset of strains from TnSeqExperimentResults that is 
-  suitable for the subsequent analysis of BarSeq experiments.
-  list<int tnseq_results_index> selected_lib - index to TnSeqExperimentResults.results
-*/
-typedef structure {
-    tnseq_experiment_results_ref experiment;
     list<int> selected_lib;
 } TnSeqLibrary;
 
