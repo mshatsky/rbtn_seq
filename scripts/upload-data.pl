@@ -421,12 +421,15 @@ $params->{data}->{col_to_index}  = {};
 $params->{data}->{row_to_index}  = $row_to_index;
 
 #fill in experiment field
-#print "Start filling in BarSeqResults object\n";
-foreach (keys %barseqdata){
-    push @{ $params->{data}->{experiments} }, [(  $Barseq2objref{ $_ }->{data} , $barseqdata{ $_ } )];
+#foreach (keys %barseqdata){
+#use the same order as in matrix2D
+foreach my $shortname( @{$matrix2D->{ "col_ids" }} ){
+    my $name = $BarseqShortName2long{ $shortname };
+
+    push @{ $params->{data}->{experiments} }, [(  $Barseq2objref{ $name }->{data} , $barseqdata{ $name } )];
 
     $params->{data}->{col_to_index}->{ 
-	                               $BarseqLongName2short{ $Barseq2objref{ $_ }->{data}->{name} } 
+	                               $shortname } 
                                      } = $#{ $params->{data}->{experiments} };
 }
 
