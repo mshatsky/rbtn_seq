@@ -27,27 +27,162 @@
     
     $.scatterPlots = function (pref) {
         var sPlots = {
-            pref: pref,
+            pref: pref, /* unique identifier to distinguish the multiple instances */
+            
+ /*
+ * This is the central data object for this widget. It contains all the data
+ * that will be plotted: dataSets, dataPoints and values. 
+ *
+ * Simple Example of two dataSets with two dataPoints:
+ * 
+ * sData = {
+ *    "values": {
+ *        "nameId1": {
+ *            "0": 123,     // "dataSetId" : numeric value
+ *            "1": -0.05,
+ *            "dataPointName": "nameId1",         // names are unique
+ *            "dataPointDesc": "desc of nameId1"
+ *        },
+ *        "nameId2": {
+ *            "0": -3.3,
+ *            "1": 999.05,
+ *            "dataPointName": "nameId2",
+ *            "dataPointDesc": "desc of nameId2"
+ *        }
+ *    },
+ *    "dataSetObjs": [
+ *        {
+ *            "dataSetName": "name",      // do not have to be unique
+ *            "dataSetId": 0,
+ *            "dataSetType": "Fitness",
+ *            "minValue": -3.3,
+ *            "maxValue": 123
+ *        },
+ *        {
+ *            "dataSetName": "name",
+ *            "dataSetId": 1,
+ *            "dataSetType": "Expression",
+ *            "minValue": -0.05,
+ *            "maxValue": 999.05
+ *        }
+ *    ],
+ *    "dataPointObjs": [
+ *        {
+ *            "dataPointName": "nameId1",          // names are unique
+ *            "dataPointDesc": "desc of nameId1"
+ *        },
+ *        {
+ *            "dataPointName": "nameId2",
+ *            "dataPointDesc": "desc of nameId1"
+ *        }
+ *    ]
+ * } 
+ */
             sData: {
                 "values": {},
                 "dataSetObjs": [],
                 "dataPointObjs": []
             },
+            
+            
+            /*
+             * Build sData object from:
+             * 
+             * Input: 
+             * 
+             * 1) mat2D object of the form
+             * KBaseFeatureValues.FloatMatrix2D
+             * 
+             * typedef structure {
+             *  list<string> row_ids;
+             *  list<string> col_ids;
+             *  list<list<float>> values;
+             * } FloatMatrix2D;
+             * 
+             * 2) pname2desc (optional) mapping of point names (in mat2D.row_ids) to 
+             * a user specified more detailed description 
+             */
+            setDataFrom2Dmatrix: function (mat2D, pname2desc) {
+                var self = this;
+
+                //iterate over experiments
+                for(var iCol = 0; iCol < mat2D.col_ids.length; ++iCol){
+                    var minV = 999;
+                    var maxV = -999;
+
+                    //iterate over datapoints
+                    for(var iRow = 0; iRow < mat2D.row_ids.length; ++iRow){
+                        var pointName = mat2D.row_ids[ iRow ];
+                    
+                        if (!(pointName in self.sData["values"])) {
+                            self.sData["values"][pointName] = {};
+                        }
+                        self.sData["values"][pointName][iCol] = mat2D.values[iRow][iCol];
+                        self.sData["values"][pointName]["dataPointName"] = pointName;
+                        self.sData["values"][pointName]["dataPointDesc"] = pointName;
+
+                        maxV = Math.max(maxV, mat2D.values[iRow][iCol]);
+                        minV = Math.min(minV, mat2D.values[iRow][iCol]);
+                    }
+                
+                
+                    self.sData["dataSetObjs"].push(
+                        {
+                            "dataSetName": mat2D.col_ids[ iCol],
+                            "dataSetId": iCol,
+                            "dataSetType": "Fitness",
+                            "minValue": minV,
+                            "maxValue": maxV
+                        });
+
+                }
+            
+                
+                //iterate over datapoints
+                for (var iRow = 0; iRow < mat2D.row_ids.length; ++iRow) {
+                    var pointName = mat2D.row_ids[ iRow ];
+                    var descr = "";
+
+                    console.log(pname2desc[pointName]);
+                    
+                    if(pname2desc !== undefined && pointName in pname2desc){
+                            descr = pname2desc[pointName];
+                    }
+                    
+                    self.sData["dataPointObjs"].push(
+                            {
+                                "dataPointName": pointName, // names are unique and cannot be numbers, otherwise access ["g"] doesnot work
+                                "dataPointDesc": descr
+                            });
+                }   
+            },
+            
+            //adds a callback function to be activated upon brush select event
+            addBrushEventSelectCallback: function (fcallback){
+              this.brushEventSelectCallback.push(fcallback);  
+            },
+            
+            
+            /*
+             * internal variables and functions
+             */
+            
+            //array of user added functions to call upon brush selection event, it will pass an array of selected ids
+            brushEventSelectCallback: [], 
+            
+            //a subset of experiments to display
             selectedSet: [],
+            //limit on number of plots to display
             maxSelection: 10,
-            hideDiagonal: 0, // toggles between showing a full square and just the upper diagonal
+            //toggles between showing a full square and just the upper diagonal
+            hideDiagonal: 0, 
+            
             container_dimensions: {}, //= {width: self.$elem.width() - 120, height: self.$elem.width() - 120};
             margins: {}, //= {top: 60, right: 60, bottom: 60, left: 60};
             chart_dimensions: {},
             padding: 25, // area between cells
             cellAreaMargin: 16, // adds a bit to the min/max range of cell data so that data points aren't on the boarders
 
-            //array of user added functions to call upon brush selection event, it will pass an array of selected ids
-            brushEventSelectCallback: [], 
-            //adds a callback function to be activated upon brush select event
-            addBrushEventSelectCallback: function (fcallback){
-              this.brushEventSelectCallback.push(fcallback);  
-            },
             /*
              * Tag data structure
              */
@@ -1068,8 +1203,26 @@ circle { \
                     //var sPlots = $.scatterPlots( );
                     //sPlots.test = 1;
 
+
+                    /*============================================================
+                     * init scatter plots
+                     *============================================================
+                     */
                     self.sPlots = $.scatterPlots( self.pref );
-                    self.sPlots.sData = self.plotData;
+                    //self.sPlots.sData = self.plotData;
+                    
+                    //prepare gene descriptors
+                    var point2desc = [];
+                    for (var g in self.annotatedGenes) {
+                        var geneFunc = self.genomeFeatures[ g ]['function'];
+                        if (!geneFunc) {
+                            geneFunc = '';
+                        }
+                        point2desc[ self.genomeFeatures[ g ].id ] = geneFunc;
+                    }
+                    
+                    //set data for scatter plots
+                    self.sPlots.setDataFrom2Dmatrix(self.barSeqExperimentResultsData.features_by_experiments, point2desc);
                     //console.log("Test0:"+self.plotData["dataPointObjs"].length);
                     self.sPlots.addBrushEventSelectCallback(
                             function(points){ 
@@ -1083,7 +1236,8 @@ circle { \
                     document.getElementById(self.pref+'plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotHeader);
                     console.log("Width: " + self.$elem.width());                    
                     self.sPlots.d3Plots(self.$elem.width());
-                    $('#'+self.pref+'plotareaContainer').find("#plotarea").empty(); //clean allocated area
+                    $('#'+self.pref+'plotareaContainer').find("#plotarea").empty(); //clean allocated area                    
+                    //============================================================                   
                 });
             });
         },
