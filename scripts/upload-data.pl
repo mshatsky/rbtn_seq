@@ -327,7 +327,7 @@ my $matrix2D = {
     "values"  => []
 };
 my %BarseqLongName2short = ();
-my %BarseqShortName2long = ();
+my %BarseqShortName2orig = ();
 my $row_to_index = {};
 
 my %data = ();
@@ -349,16 +349,16 @@ for(my $i=4; $i<= $#headerData; ++$i){
     $shortname =~ s/_/ /g;
 
     #short names can be non unique, add index
-    if(exists $BarseqShortName2long{ $shortname }){
+    if(exists $BarseqShortName2orig{ $shortname }){
 	my $counter = 2;
-	while( exists $BarseqShortName2long{ $shortname."$counter" } ){
+	while( exists $BarseqShortName2orig{ $shortname."$counter" } ){
 	    ++$counter;
 	}
 	$shortname = $shortname."$counter";
     }
     #print "Test: name : ", $Barseq2objref{ $headerData[$i] }{name}, " : ", $shortname, "\n";
     $BarseqLongName2short{ $Barseq2objref{ $headerData[$i] }{name} } = $shortname;
-    $BarseqShortName2long{ $shortname } = $Barseq2objref{ $headerData[$i] }{name};
+    $BarseqShortName2orig{ $shortname } = $headerData[$i];
     push @{$matrix2D->{ "col_ids" }}, $shortname;#$headerData[$i];
 }
 #foreach (@headerData){
@@ -424,7 +424,7 @@ $params->{data}->{row_to_index}  = $row_to_index;
 #foreach (keys %barseqdata){
 #use the same order as in matrix2D
 foreach my $shortname( @{$matrix2D->{ "col_ids" }} ){
-    my $name = $BarseqShortName2long{ $shortname };
+    my $name = $BarseqShortName2orig{ $shortname };
 
     push @{ $params->{data}->{experiments} }, [(  $Barseq2objref{ $name }->{data} , $barseqdata{ $name } )];
 
