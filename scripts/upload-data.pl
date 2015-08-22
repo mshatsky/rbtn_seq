@@ -428,9 +428,7 @@ foreach my $shortname( @{$matrix2D->{ "col_ids" }} ){
 
     push @{ $params->{data}->{experiments} }, [(  $Barseq2objref{ $name }->{data} , $barseqdata{ $name } )];
 
-    $params->{data}->{col_to_index}->{ 
-	                               $shortname } 
-                                     } = $#{ $params->{data}->{experiments} };
+    $params->{data}->{col_to_index}->{  $shortname } = $#{ $params->{data}->{experiments} };
 }
 
 #print "Test: ",$params->{name}, " : ", $params->{data}->{genome}, "\n";
