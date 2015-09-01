@@ -22,6 +22,36 @@
  * http://bl.ocks.org/mbostock/4063663
  * then adopted by Paramvir Dehal and turned to support multiple scatterplots 
  * and finally revised by Max Shatsky to be a standalone widget within KBase.
+ * 
+ * relevant interface functions:
+ * 
+ //------init--------------
+ //
+ self.sPlots = $.scatterPlots( uuid );
+ //set data
+ self.sPlots.setDataFrom2Dmatrix(self.barSeqExperimentResultsData.features_by_experiments, point2desc);
+ //add a call-back function when points are selected with a mouse
+ self.sPlots.addBrushEventSelectCallback(
+                            function(points){ 
+                                console.log("BrushEvent"); 
+                            });
+//add scatter plots html elements to the current div
+container.append(self.sPlots.plotAreaContainer);
+document.getElementById(self.pref+'plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotHeader);
+//init scatterplot graphics
+self.sPlots.initGraphics(self.$elem.width());
+//add tag to color selected points
+self.sPlots.addTag("globalSelection", "#ff4d00");
+//------end of init----------
+
+
+//Usage:
+
+//add/remove specific data set to/from the plots
+self.sPlots.set_selected_dataSet( set_id );
+
+//add a point to 'globalSelection' tag (make it colored)
+self.sPlots.addPointToTag("globalSelection", point_id);
  */
 
     
@@ -143,7 +173,7 @@
                     var pointName = mat2D.row_ids[ iRow ];
                     var descr = "";
 
-                    console.log(pname2desc[pointName]);
+                    //console.log(pname2desc[pointName]);
                     
                     if(pname2desc !== undefined && pointName in pname2desc){
                             descr = pname2desc[pointName];
@@ -162,11 +192,7 @@
               this.brushEventSelectCallback.push(fcallback);  
             },
             
-            
-            /*
-             * internal variables and functions
-             */
-            
+              
             //array of user added functions to call upon brush selection event, it will pass an array of selected ids
             brushEventSelectCallback: [], 
             
@@ -177,14 +203,18 @@
             //toggles between showing a full square and just the upper diagonal
             hideDiagonal: 0, 
             
-            container_dimensions: {}, //= {width: self.$elem.width() - 120, height: self.$elem.width() - 120};
-            margins: {}, //= {top: 60, right: 60, bottom: 60, left: 60};
+            //plot related dimensions/margins etc.
+            container_dimensions: {}, 
+            margins: {},
             chart_dimensions: {},
             padding: 25, // area between cells
             cellAreaMargin: 16, // adds a bit to the min/max range of cell data so that data points aren't on the boarders
 
             /*
              * Tag data structure
+             * allows to create various tags for diff coloring of points
+             * at this moment only single tag is used 'active' to color
+             * selected points
              */
             tags: {},
             activeTags: [],
@@ -243,68 +273,8 @@ circle { \
       <div id="tooltip" style="position: absolute; z-index: 10; visibility: hidden; opacity: 0.8; background-color: rgb(34, 34, 34); color: rgb(255, 255, 255); padding: 0.5em;"> \
       </div> \
 ',
-            offset: function () {
-                var ele = $("#plotarea");//this[0];
-
-                if (ele && ele.isNode()) {
-                    var offset = {
-                        x: ele._private.position.x,
-                        y: ele._private.position.y
-                    };
-
-                    var parents = ele.parents();
-                    for (var i = 0; i < parents.length; i++) {
-                        var parent = parents[i];
-                        var parentPos = parent._private.position;
-
-                        offset.x += parentPos.x;
-                        offset.y += parentPos.y;
-                    }
-
-                    return offset;
-                }
-            },
-            offset2: function () {
-                var x, y;
-                var offsetLeft = 0;
-                var offsetTop = 0;
-                var n;
-                n = $("#plotarea");//$(this)[0];//this.data.container;
-                // Stop checking scroll past the level of the DOM tree containing document.body. At this point, scroll values do not have the same impact on pageX/pageY.
-                var stopCheckingScroll = false;
-                while (n != null) {
-                    console.log(JSON.stringify(n));
-                    var style = window.getComputedStyle(n);
-                    if (style.getPropertyValue('position').toLowerCase() === 'fixed') {
-                        offsetLeft += n.offsetLeft + window.scrollX;
-                        offsetTop += n.offsetTop + window.scrollY;
-                        n = null; // don't want to check any more parents after position:fixed
-
-
-                    } else if (typeof (n.offsetLeft) == "number") {
-                        // The idea is to add offsetLeft/offsetTop, subtract scrollLeft/scrollTop, ignoring scroll values for elements in DOM tree levels 2 and higher.
-                        offsetLeft += n.offsetLeft;
-                        offsetTop += n.offsetTop;
-                        if (n == document.body || n == document.header) {
-                            stopCheckingScroll = true;
-                        }
-                        if (!stopCheckingScroll) {
-                            offsetLeft -= n.scrollLeft;
-                            offsetTop -= n.scrollTop;
-                        }
-                    }
-
-                    if (n) {
-                        n = n.offsetParent
-                    }
-                    ;
-                }
-
-                // By here, offsetLeft and offsetTop represent the "pageX/pageY" of the top-left corner of the div.
-                return [offsetLeft, offsetTop];
-            },
-        
-            d3Plots: function (widthX) {
+     
+            initGraphics: function (widthX) {
           
                 //var container_dimensions = {width: 900, height: 900},
                 //margins = {top: 60, right: 60, bottom: 60, left: 60},
@@ -333,9 +303,7 @@ circle { \
                 selectedSet = [];
                 selectedDataPoints = {}
 
-                $('#'+this.pref+'plotareaContainer').find("#plotarea").empty();
-
-
+    
                 var scatterplot = d3.select('#'+this.pref+'plotareaContainer').select("#plotarea")
                         .append("svg")
                         .attr("width", this.container_dimensions.width)
@@ -343,23 +311,34 @@ circle { \
                         .append("g")
                         .attr("transform", "translate(" + this.margins.left + "," + this.margins.top + ")")
                         .attr("id", "scatterplot");
+                
+                $('#'+this.pref+'plotareaContainer').find("#plotarea").empty();
 
                 //load_tags(); !!!
-                $("#loading").addClass("hidden");
+                //$("#loading").addClass("hidden");
                 
                 //init global gene selection tag
-                var tagName = "globalSelection";
+                //var tagName = "globalSelection";
+                //this.tags[tagName] = {};
+                //this.tags[tagName] = {
+                //    "status": 0,
+                //    "dataPointNames": []
+                //};
+                //var color = "#ff4d00";
+                //this.activeTags.push({"id": tagName, "color": color});
+            },
+            
+            //add tag name to color points
+            addTag: function(tagName, color){
                 this.tags[tagName] = {};
                 this.tags[tagName] = {
                     "status": 0,
                     "dataPointNames": []
                 };
-                var color = "#ff4d00";
                 this.activeTags.push({"id": tagName, "color": color});
-                    
-
             },
             
+            //add point to a tag (for coloring)
             addPointToTag: function (tagName, pointId){
                 if (undefined === this.tags[tagName]) {
                     console.log("Error: tag name undefined: " + tagName);
@@ -648,47 +627,9 @@ circle { \
                                 return $('#tooltip').css("visibility", "visible");
                             })
                             .on("mousemove", function () {
-                                //does not work properly on KBase: 
-                                console.log("Offset: " + window.pageYOffset + " " + window.pageXOffset);
-                                console.log("Event: " + d3.event.pageY + " " + d3.event.pageX);
-                                var p = $('#notebook').offset();
-                                console.log("Notebook: " + p.top + " " + p.left);
-                                //var offset = self.offset();
-                                //console.log(JSON.stringify(offset));
-                                //console.log("Event Offset: " + offset.y + " " + offset.x);
-                                //var offset2 = self.offset2();
-                                //console.log(JSON.stringify(offset2));
-                                //return $('#tooltip').css("top", (d3.event.pageY - offset.y + 15) + "px").css("left", (d3.event.pageX - offset.x - 10) + "px");
-                                
-                                var el = $('#'+self.pref+'plotareaContainer').find("#plotarea");
-                                console.log("Plotarea el: "+el.attr('id'));
-                                console.log("Plotarea offset parent el: "+el.offsetParent().attr('id'));
-                                
-                                var posi = {x: 0, y: 0};
-                                var count = 10;
-                                while (el && count>0) {
-                                    count = count -1;
-                                    var o= el.offset(); 
-                                    posi.x += o.left;
-                                    posi.y += o.top;
-                                    el = el.offsetParent();
-                                    console.log("Pos for :" + el.attr('id')+JSON.stringify(posi));
-                                }
-                                console.log("Finale offset: "+JSON.stringify(posi));
-                                
-                                //tooltip uses relative coordinates within  the notebook elem
-                                //[Log] Offset: 1555 0 (kbaseBarSeqExperimentResults.js, line 857)
-                                //[Log] Event: 1866 877 (kbaseBarSeqExperimentResults.js, line 858)
-                                //[Log] Notebook: 73 380 (kbaseBarSeqExperimentResults.js, line 860)
-                                //event - notebook is about right
-                                //return $('#tooltip').css("top", (d3.event.pageY - 100) + "px").css("left", (d3.event.pageX - 350) + "px");
+                                var p = $('#notebook').offset(); //relies on KBase notebook offset. Tried to avoid it but could not find a way.
                                 return $('#tooltip').css("top", (d3.event.pageY - p.top + 15) + "px").css("left", (d3.event.pageX - p.left - 10) + "px");
-                                
-                                //var matrix = this.getScreenCTM()
-                                //        .translate(+this.getAttribute("cx"), +this.getAttribute("cy"));
-                                //return $('#tooltip').css("top", (window.pageXOffset + matrix.e + 15) + "px").css("left", (window.pageYOffset + matrix.f - 10) + "px");
-                                //return $('#tooltip').css("top", (this.getAttribute("cx") + 15) + "px").css("left", (this.getAttribute("cy") - 10) + "px");
-                            })
+                                })
                             .on("mouseout", function (d) {
                                 var id = $(this).attr("id");
                                 d3.select('#'+self.pref+'plotareaContainer').selectAll("circle#" + id).classed("highlighted", 0)
@@ -698,8 +639,9 @@ circle { \
                             });
                 }
             },
+            
             set_selected_dataSet: function (id) {
-// flag for dataSets to act as a toggle to remove ids that were already selected
+                // flag for dataSets to act as a toggle to remove ids that were already selected
                 var markForRemoval;
                 // if selection already selected, mark index pos for removal
                 for (var i = 0; i < this.selectedSet.length; i += 1) {
@@ -707,22 +649,22 @@ circle { \
                         markForRemoval = i;
                     }
                 }
-// if selection wasn't already selected, push on to selection list
+                // if selection wasn't already selected, push on to selection list
                 if (undefined === markForRemoval) {
                     this.selectedSet.push(id);
                 }
-// if selection list is greater than max length, mark first element for removal
+                // if selection list is greater than max length, mark first element for removal
                 if (this.selectedSet.length > this.maxSelection) {
                     markForRemoval = 0;
                 }
-// if anything has been marked for removal, remove it
+                // if anything has been marked for removal, remove it
                 if (undefined != markForRemoval) {
                     //d3.select("#key_label_" + this.selectedSet[markForRemoval]).style("font-weight", "normal");
                     //d3.select("#key_square_" + this.selectedSet[markForRemoval]).style("background", "white");
                     //d3.select("#key_count_" + this.selectedSet[markForRemoval]).text("");
                     this.selectedSet.splice(markForRemoval, 1);
                 }
-// set the styling for selected datasets
+                // set the styling for selected datasets
                 for (i = 0; i < this.selectedSet.length; i += 1) {
                     //d3.select("#key_label_" + this.selectedSet[i]).style("font-weight", "bold");
                     //d3.select("#key_square_" + this.selectedSet[i]).style("background", "#99CCFF");
@@ -751,6 +693,29 @@ circle { \
                 //clean plot if nothing to show
                 if(this.selectedSet.length < 1){
                     $('#'+this.pref+'plotareaContainer').find("#plotarea").empty();
+                }
+            },
+                   
+            //utility function to compute offset of an alement 
+            offset: function () {
+                var ele = $("#plotarea");//this[0];
+
+                if (ele && ele.isNode()) {
+                    var offset = {
+                        x: ele._private.position.x,
+                        y: ele._private.position.y
+                    };
+
+                    var parents = ele.parents();
+                    for (var i = 0; i < parents.length; i++) {
+                        var parent = parents[i];
+                        var parentPos = parent._private.position;
+
+                        offset.x += parentPos.x;
+                        offset.y += parentPos.y;
+                    }
+
+                    return offset;
                 }
             }
         };
@@ -831,10 +796,10 @@ circle { \
             self.pref = "pc"+this.uuid() + "-";
             self.loading(true);
 
-            console.log("Length of experiments :" + self.experiments.length);
-            console.log("UUID :" + self.pref);
-            console.log("experimentsCount " + self.experimentsCount);
-            console.log("Sick genes : " + Object.keys(self.experimentToSickGenes));
+            //console.log("Length of experiments :" + self.experiments.length);
+            //console.log("UUID :" + self.pref);
+            //console.log("experimentsCount " + self.experimentsCount);
+            //console.log("Sick genes : " + Object.keys(self.experimentToSickGenes));
             
             var container = this.$elem;
             var kbws = this.ws;
@@ -1054,12 +1019,12 @@ circle { \
                     tableGenes.dataTable(geneTableSettings);
 
                     function eventsGeneTab() {
-                        console.log("Event Gene triggered: " + $(this).attr('value'));
+                        //console.log("Event Gene triggered: " + $(this).attr('value'));
                         
                        
                         var a = '<input type = "checkbox" class = "checkboxGeneX value = Gene valuechecked = 10 >';
                         var x = a.split("valuechecked = ");
-                        console.log("Test parsing: " +x[0] + " : " + x[1] + " : " + (3+parseFloat(x[1])));
+                        //console.log("Test parsing: " +x[0] + " : " + x[1] + " : " + (3+parseFloat(x[1])));
                        
                         //action
                         $('.checkboxGene' + self.pref).unbind('click');
@@ -1076,9 +1041,9 @@ circle { \
                             }else{
                                 $(this).attr('valuechecked', 0);
                             }
-                            console.log("Adding point to tag0 checked: " + $(this).attr('valuechecked') + " : " + this.checked);
+                            //console.log("Adding point to tag0 checked: " + $(this).attr('valuechecked') + " : " + this.checked);
 
-                            console.log("Adding point to tag0: " + $(this).attr('value'));
+                            //console.log("Adding point to tag0: " + $(this).attr('value'));
 
                             self.sPlots.addPointToTag("globalSelection", $(this).attr('value'));
 
@@ -1093,7 +1058,7 @@ circle { \
                     
                     ///////////////////////////////////// Experiments Tab Events ////////////////////////////////////////////          
                     function eventsExperimentsTab() {
-                        console.log("Event Exp triggered: " + $(this).attr('value'));    
+                        //console.log("Event Exp triggered: " + $(this).attr('value'));    
 
                         $('.checkboxExp' + self.pref).unbind('click');
                         $('.checkboxExp' + self.pref).click(function () {
@@ -1192,26 +1157,14 @@ circle { \
                     }
 
 
-                    //===============================================
-                    //prepare area for scatter plots
-                    //===============================================
-                    //container.append(self.plotAreaContainer);
-                    //document.getElementById('plotareaContainer').insertAdjacentHTML('beforeend', self.plotHeader);
-                    //self.d3Plots();
-
-
-                    //var sPlots = $.scatterPlots( );
-                    //sPlots.test = 1;
-
-
+                
                     /*============================================================
                      * init scatter plots
                      *============================================================
                      */
                     self.sPlots = $.scatterPlots( self.pref );
-                    //self.sPlots.sData = self.plotData;
                     
-                    //prepare gene descriptors
+                    //prepare gene descriptors (long description is needed when the mouse moves over a point) 
                     var point2desc = [];
                     for (var g in self.annotatedGenes) {
                         var geneFunc = self.genomeFeatures[ g ]['function'];
@@ -1223,7 +1176,8 @@ circle { \
                     
                     //set data for scatter plots
                     self.sPlots.setDataFrom2Dmatrix(self.barSeqExperimentResultsData.features_by_experiments, point2desc);
-                    //console.log("Test0:"+self.plotData["dataPointObjs"].length);
+                    
+                    //add a call-back function when points are selected with a mouse
                     self.sPlots.addBrushEventSelectCallback(
                             function(points){ 
                                 console.log("BrushEvent0"); 
@@ -1231,12 +1185,17 @@ circle { \
                                 console.log("Length of experiments :" + self.experiments.length);
                                 console.log("UUID :" + self.pref);
                             });
-
+                    //add scatter plots html elements to the current div
                     container.append(self.sPlots.plotAreaContainer);
                     document.getElementById(self.pref+'plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotHeader);
-                    console.log("Width: " + self.$elem.width());                    
-                    self.sPlots.d3Plots(self.$elem.width());
-                    $('#'+self.pref+'plotareaContainer').find("#plotarea").empty(); //clean allocated area                    
+                    //console.log("Width: " + self.$elem.width());      
+                    
+                    //init scatterplot graphics
+                    self.sPlots.initGraphics(self.$elem.width());
+                    
+                    //add tag to color selected points
+                    self.sPlots.addTag("globalSelection", "#ff4d00");
+                    //$('#'+self.pref+'plotareaContainer').find("#plotarea").empty(); //clean allocated area      
                     //============================================================                   
                 });
             });
