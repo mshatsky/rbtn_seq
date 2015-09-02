@@ -33,7 +33,7 @@
  //add a call-back function when points are selected with a mouse
  self.sPlots.addBrushEventSelectCallback(
                             function(points){ 
-                                console.log("BrushEvent"); 
+                                console.log("Event points triggered: " + points.length); 
                             });
 //add scatter plots html elements to the current div
 container.append(self.sPlots.plotAreaContainer);
@@ -754,6 +754,8 @@ circle { \
         experiments: [],
         experimentToSickGenes: {},
         genesToLog: [],
+        geneID2index: {},
+        geneCart: {}, //gene cart with selected genes (gene names)
         sPlots: null, //$.scatterPlots( );
         //plotArea: $('<div id="plotarea">Area for plots</div><script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>'),
         //plotAreaContainer: $('<div id="plotareaContainer"></div>'),
@@ -971,7 +973,7 @@ circle { \
                         "aaData": [],
                         "aaSorting": [[0, "desc"], [1, "desc"], [2, "asc"]],
                         "aoColumns": [
-                            {sTitle: "Plot", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
+                            {sTitle: "Gene Cart", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
                             //{sTitle: "Plot", mData: "plotCheckBoxGene", "bSortable": true, "orderDataType": "dom-checkbox"}, 
                             {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
                             {sTitle: "Description", mData: "geneDescription"}
@@ -1046,7 +1048,15 @@ circle { \
                             //console.log("Adding point to tag0: " + $(this).attr('value'));
 
                             self.sPlots.addPointToTag("globalSelection", $(this).attr('value'));
-
+                            if(undefined === self.geneCart[ $(this).attr('value') ]){
+                                self.geneCart[ $(this).attr('value') ] = 1;
+                            }else{
+                                delete self.geneCart[ $(this).attr('value') ];
+                            }
+                            
+                            //update Gene Cart
+                            createGeneCartTab(false);
+                            
                             //$(this).attr('value')
                             //if($(this).is(":checked")) {
                             //    $('#plotareaContainer').append("p").text( "Chekced" + $(this).attr('value') );
@@ -1136,8 +1146,136 @@ circle { \
                         eventsMoreDescription();
                     };
                     
-                
+                    function eventsPointsSelectedTab(points) {
+                        if (tabPane.kbaseTabs('hasTab', "Boxed Genes")) {
+                          tabPane.kbaseTabs('removeTab', "Boxed Genes");
+                        }
 
+                        var tabContent = $("<div/>");
+
+                        var tableGenes = $('<table class="table table-striped table-bordered" ' +
+                                'style="width: 100%; margin-left: 0px; margin-right: 0px;" id="' + self.pref + expID + '-table"/>');
+                        tabContent.append(tableGenes);
+                        var geneTableSettings = {
+                            "sPaginationType": "full_numbers",
+                            "iDisplayLength": 10,
+                            "aaData": [],
+                            "aaSorting": [[0, "desc"],[1, "asc"], [2, "desc"]],
+                            "aoColumns": [
+                                {sTitle: "Gene Cart", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
+                                {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
+                                {sTitle: "Description", mData: "geneDescription"}
+                            ],
+                            "oLanguage": {
+                                "sEmptyTable": "No genes found!",
+                                "sSearch": "Search: "
+                            },
+                            'fnDrawCallback': eventsGeneTab
+                        };
+
+                        var geneTableData = [];
+
+                        for (var i in points) {
+                            var geneID = points[i];
+                      
+                            var geneFunc = self.genomeFeatures[ self.geneID2index[geneID] ]['function'];
+                            if (!geneFunc) {
+                                geneFunc = '-';
+                            }
+                            
+                            var checkBoxPlot = '<input type = "checkbox" class = "checkboxGene' + self.pref + '"'
+                                +
+                                ' value = "' + geneID + '" valuechecked = 0 >'; //onclick="function(a){this.valuechecked = a.checked;}
+                      
+                            geneTableData.push({
+                                'plotCheckBoxGene': checkBoxPlot,
+                                'geneID': geneID,
+                                'geneDescription': geneFunc
+                            });
+                        }
+
+                        geneTableSettings.aaData = geneTableData;
+                        tabPane.kbaseTabs('addTab', {tab: "Boxed Genes", content: tabContent, canDelete: true, show: true});
+                        tableGenes.dataTable(geneTableSettings);
+
+                        
+                    };
+                
+                    function createGeneCartTab(showTab) {
+                        showTab = showTab || false;
+                        
+                        if (tabPane.kbaseTabs('hasTab', "Gene Cart")) {
+                          tabPane.kbaseTabs('removeTab', "Gene Cart");
+                        }
+
+                        var tabContent = $("<div/>");
+
+                        var tableGenes = $('<table class="table table-striped table-bordered" ' +
+                                'style="width: 100%; margin-left: 0px; margin-right: 0px;" id="' + self.pref + expID + '-table"/>');
+                        tabContent.append(tableGenes);
+                        var geneTableSettings = {
+                            "sPaginationType": "full_numbers",
+                            "iDisplayLength": 10,
+                            "aaData": [],
+                            "aaSorting": [[0, "desc"],[1, "asc"], [2, "desc"]],
+                            "aoColumns": [
+                                {sTitle: "Remove", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
+                                {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
+                                {sTitle: "Description", mData: "geneDescription"}
+                            ],
+                            "oLanguage": {
+                                "sEmptyTable": "No genes found!",
+                                "sSearch": "Search: "
+                            },
+                            'fnDrawCallback': eventsGeneCartTab(true)
+                        };
+
+                        var geneTableData = [];
+
+                        for (var geneID in self.geneCart) {
+                            var geneFunc = self.genomeFeatures[ self.geneID2index[geneID] ]['function'];
+                            if (!geneFunc) {
+                                geneFunc = '-';
+                            }
+                            
+                            var checkBoxPlot = '<input type = "checkbox" class = "checkboxGene' + self.pref + '"'
+                                +
+                                ' value = "' + geneID + '" valuechecked = 0 >'; //onclick="function(a){this.valuechecked = a.checked;}
+                      
+                            geneTableData.push({
+                                'plotCheckBoxGene': checkBoxPlot,
+                                'geneID': geneID,
+                                'geneDescription': geneFunc
+                            });
+                        }
+
+                        geneTableSettings.aaData = geneTableData;
+                        tabPane.kbaseTabs('addTab', {tab: "Gene Cart", content: tabContent, canDelete: false, show: showTab});
+                        tableGenes.dataTable(geneTableSettings);
+
+                        
+                    };
+                    
+                    function eventsGeneCartTab(showTab) {
+                        showTab = showTab || false;
+                        //action
+                        $('.checkboxGene' + self.pref).unbind('click');
+                        $('.checkboxGene' + self.pref).click(function () {
+                     
+                            self.sPlots.addPointToTag("globalSelection", $(this).attr('value'));
+                            if(undefined === self.geneCart[ $(this).attr('value') ]){
+                                self.geneCart[ $(this).attr('value') ] = 1;
+                            }else{
+                                delete self.geneCart[ $(this).attr('value') ];
+                            }
+                            
+                            //update Gene Cart
+                            createGeneCartTab(showTab);
+                        });
+                    };
+                    //make Gene Cart Tab
+                    createGeneCartTab(false);
+                    
                     //////////////////// Events for Show More/less Description  ////////////////////////////////////////////       
                     function eventsMoreDescription() {
                         $('.show-more' + self.pref).unbind('click');
@@ -1178,6 +1316,7 @@ circle { \
                     self.sPlots.setDataFrom2Dmatrix(self.barSeqExperimentResultsData.features_by_experiments, point2desc);
                     
                     //add a call-back function when points are selected with a mouse
+                    self.sPlots.addBrushEventSelectCallback( eventsPointsSelectedTab );
                     self.sPlots.addBrushEventSelectCallback(
                             function(points){ 
                                 console.log("BrushEvent0"); 
@@ -1185,6 +1324,7 @@ circle { \
                                 console.log("Length of experiments :" + self.experiments.length);
                                 console.log("UUID :" + self.pref);
                             });
+                            
                     //add scatter plots html elements to the current div
                     container.append(self.sPlots.plotAreaContainer);
                     document.getElementById(self.pref+'plotareaContainer').insertAdjacentHTML('beforeend', self.sPlots.plotHeader);
@@ -1207,6 +1347,7 @@ circle { \
             self.genesToLog = [];
             self.annotatedGenes = {};
             self.experimentToSickGenes = {};
+            self.geneID2index = self.barSeqExperimentResultsData.row_to_index;
             
             self.experimentsCount = self.barSeqExperimentResultsData.experiments.length;
 
