@@ -758,12 +758,38 @@ circle { \
         geneCart: {}, //gene cart with selected genes (gene names)
         genesBoxed: {}, //selected genes with a brush from sPlots
         sPlots: null, //$.scatterPlots( );
-        //plotArea: $('<div id="plotarea">Area for plots</div><script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>'),
-        //plotAreaContainer: $('<div id="plotareaContainer"></div>'),
         plotData: {
             "values": {},
             "dataSetObjs": [],
             "dataPointObjs": []
+        },   
+        //plotArea: $('<div id="plotarea">Area for plots</div><script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>'),
+        //plotAreaContainer: $('<div id="plotareaContainer"></div>'),
+        getState: function() {
+            var self = this;
+            var state = {
+                geneCart: self.geneCart, //gene cart with selected genes (gene names)
+                genesBoxed: self.genesBoxed, //selected genes with a brush from sPlots
+            };
+            console.log("Getting State :" + Object.keys(self.geneCart).length);
+            console.log("Getting State :" + Object.keys(self.genesBoxed).length); 
+            return state;
+        },
+        loadState: function(state) {
+            var self = this;
+            console.log('load state');
+            if (state){
+                console.log("Loading State :" + Object.keys(self.geneCart).length);
+                console.log("Loading State :" + Object.keys(self.genesBoxed).length); 
+            
+                if( state.geneCart ){
+                     self.geneCart = state.geneCart;
+                }
+                if( state.genesBoxed ){
+                     self.genesBoxed = state.genesBoxed;
+                }
+                //self.render();
+            }
         },
         init: function (options) {
             this._super(options);
@@ -865,42 +891,17 @@ circle { \
                         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
                     },
                     "checkbox-custom-pre": function (a) {
-                        //get value from ' value = "' + geneIDtoDisplay + '"
-                        var x = String(a).split(" value = ");
-                        x = String(x[1]).split('"');
+                        var x = String(a).split(" valuechecked = ");
                          
-                        return parseFloat($(".checkboxGene"+self.pref + "[value='"+x[1]+"']").attr('valuechecked'));
+                        return parseFloat(x[1]);
+                        //var x = String(a).split(" value = ");
+                        //x = String(x[1]).split('"');
+                        //return parseFloat($(".checkboxGene"+self.pref + "[value='"+x[1]+"']").attr('valuechecked'));
                     },
                     "checkbox-custom-asc": function (a, b) {
                         return ((a < b) ? -1 : ((a > b) ? 1 : 0));
                     },
                     "checkbox-custom-desc": function (a, b) {
-                        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
-                    },
-                    "checkboxGC-custom-pre": function (a) {
-                        //get value from ' value = "' + geneIDtoDisplay + '"
-                        var x = String(a).split(" value = ");
-                        x = String(x[1]).split('"');
-                         
-                        return parseFloat($(".checkboxGC"+self.pref + "[value='"+x[1]+"']").attr('valuechecked'));
-                    },
-                    "checkboxGC-custom-asc": function (a, b) {
-                        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
-                    },
-                    "checkboxGC-custom-desc": function (a, b) {
-                        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
-                    },
-                    "checkboxGB-custom-pre": function (a) {
-                        //get value from ' value = "' + geneIDtoDisplay + '"
-                        var x = String(a).split(" value = ");
-                        x = String(x[1]).split('"');
-                         
-                        return parseFloat($(".checkboxGB"+self.pref + "[value='"+x[1]+"']").attr('valuechecked'));
-                    },
-                    "checkboxGB-custom-asc": function (a, b) {
-                        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
-                    },
-                    "checkboxGB-custom-desc": function (a, b) {
                         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
                     }
                 });
@@ -943,12 +944,12 @@ circle { \
                         "sPaginationType": "full_numbers",
                         "iDisplayLength": 10,
                         "aaData": [],
-                        "aaSorting": [[0, "desc"],[1, "desc"],[2, "desc"]],
+                        "aaSorting": [[1, "desc"],[2, "desc"]],
                         "aoColumns": [
-                            {sTitle: "Plot", mData: "plotCheckBoxExp", "bSortable": true},
+                            {sTitle: "Plot", mData: "plotCheckBoxExp", bSortable: false},
                             {sTitle: "Description", mData: "experimentDescription"},
-                            {sTitle: "Sick Genes", mData: "sickGenes", sType: "num-html"},
-                            {sTitle: "Sick Genes Long", mData: "sickGenesLong", bVisible: false, bSearchable: true}
+                            {sTitle: "Sick Genes", mData: "sickGenes", sType: "num-html"}
+                            //{sTitle: "Sick Genes Long", mData: "sickGenesLong", bVisible: false, bSearchable: true}
                         ],
                         "oLanguage": {
                             "sEmptyTable": "No experiments found!",
@@ -980,8 +981,7 @@ circle { \
                                 {
                                     'plotCheckBoxExp': checkBoxPlot,
                                     'experimentDescription': self.barSeqExperimentResultsData.experiments[ i ][0].name_short, //expID, coco
-                                    'sickGenes': genesRefs,
-                                    'sickGenesLong': sickGenes.length
+                                    'sickGenes': genesRefs
                                 }
                         );
                     };                    
@@ -1093,7 +1093,7 @@ circle { \
                             "sPaginationType": "full_numbers",
                             "iDisplayLength": 10,
                             "aaData": [],
-                            "aaSorting": [[0, "desc"], [1, "desc"], [2, "asc"]],
+                            "aaSorting": [[1, "desc"], [2, "asc"]],
                             "aoColumns": [
                                 {sTitle: "Gene Cart", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
                                 //{sTitle: "Plot", mData: "plotCheckBoxGene", "bSortable": true, "orderDataType": "dom-checkbox"}, 
@@ -1228,7 +1228,7 @@ circle { \
                             "aaData": [],
                             "aaSorting": [[1, "asc"], [2, "desc"]],
                             "aoColumns": [
-                                {sTitle: "Gene Cart", mData: "plotCheckBoxGene", sType: "checkboxGB-custom"},
+                                {sTitle: "Gene Cart", mData: "plotCheckBoxGene", sType: "checkbox-custom"},
                                 {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
                                 {sTitle: "Description", mData: "geneDescription"}
                             ],
@@ -1306,7 +1306,7 @@ circle { \
                             "aaData": [],
                             "aaSorting": [[1, "asc"], [2, "desc"]],
                             "aoColumns": [
-                                {sTitle: "Remove", mData: "plotCheckBoxGene", sType: "checkboxGC-custom"},
+                                {sTitle: "Remove", mData: "plotCheckBoxGene", "bSortable": false},
                                 {sTitle: "Gene", mData: "geneID"}, //"sWidth": "15%"
                                 {sTitle: "Description", mData: "geneDescription"}
                             ],
